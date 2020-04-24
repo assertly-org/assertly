@@ -2,4 +2,4 @@ dist/
 repos
 cypress
 tests_output
-
+node_modules
