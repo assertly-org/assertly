@@ -18,19 +18,14 @@ export default class TestGeneration extends ControllerBase {
   @post('')
   async createTest(event: object): Promise<any> {
     try {
-      
       if (!event) {
         this.input.res.send({message: 'no test to generate'});
         return;
       }
-
       console.log('this is the event sent', event);
-
       const jestTestWriter = new testWriter('jest', event);
       let unitTests: any;
-      
       unitTests = jestTestWriter.write();
-
     } catch (e) {
       console.error('createTest error: ', e);
       this.input.res.sendStatus(500);
