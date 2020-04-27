@@ -8,6 +8,9 @@ stages:
 
 jobs:
   include:
+    - stage: install
+      script: npm install
+
     - stage: build
       script: npm run build
 
