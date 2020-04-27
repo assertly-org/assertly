@@ -2,21 +2,26 @@ language: node_js
 node_js:
   - 10
 
-stages:
-  - install
-  - build
-  - test
 
-jobs:
-  include:
-    - stage: install
-      script: npm install
+# stages:
+#   - install
+#   - build
+#   - test
 
-    - stage: build
-      script: npm run build
+# jobs:
+#   include:
+#     - stage: install
+#       script: npm install
 
-    - stage: test
-      script: npm run test
+#     - stage: build
+#       script: npm run build
 
-before_script:
+#     - stage: test
+#       script: npm run test
+
+before_install:
   - cd assertly-oss-api
+install: npm install
+
+# before_script:
+#   - cd assertly-oss-api
