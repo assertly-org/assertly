@@ -1,7 +1,18 @@
 language: node_js
 node_js:
-- '4'
+  - '4'
+
+stages:
+  - build
+  - test
+
+jobs:
+  include:
+    - stage: build
+      script: npm run build
+
+    - stage: test
+      script: npm run test
 
 before_script:
-- cd assertly-oss-api
-- npm build 
+  - cd assertly-oss-api
