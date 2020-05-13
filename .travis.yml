@@ -1,27 +1,17 @@
 language: node_js
 node_js:
-  - 10
-
-
-# stages:
-#   - install
-#   - build
-#   - test
-
-# jobs:
-#   include:
-#     - stage: install
-#       script: npm install
-
-#     - stage: build
-#       script: npm run build
-
-#     - stage: test
-#       script: npm run test
-
+- 10
 before_install:
-  - cd assertly-oss-api
+- cd assertly-oss-api
 install: npm install
 
-# before_script:
-#   - cd assertly-oss-api
+# NPM_TOKEN was encrypted by the CLI and contained in the env below
+
+deploy:
+  provider: npm
+  email: "zealotsd@gmail.com"
+  api_key: NPM_TOKEN
+
+env:
+  global:
+    secure: do5RsG9Oa0Ke6mZYhdcjqU5C3u9cgd+ixtd9T53U8gq4X7+9e+9f5I+dKgA+gZgE9wVCXuDCGHuvCzpVGCfF3ktbPMRt4vVxggGKO3EED/kb9ayEL1UQtcEDFHWAMBGu7DNvTUXkgXMicb4bsAh9Idskv3WroZVN2qK0r66UXjIZfphBpa1CLPW/h2Xnr/kKL8Pl6ycRz6L2mXkk9+TiWqUuWUXHNpma9P3X9NSSFok5cj9Ap6eKlkC+5G7uejesY1NPf3jONa4UaOEJO26H8lhbpBdyFPLfAR7JuTlUGALe56IJjrPdFl0D8kUi4P//7X5cbnajOh7LMC/LUEd56Q2XTp+HAul7VRf30kk1yztul5oGpZMk6pjm5wvzUQtBd5kgNJz4BWlp4MFrVOI+F3hx//S7XplTt1KVOpz7h8qsDxSxf1egr4HwfsCLHBwm2MQ7ppCqxI4myfjtbbO6iiyUbcNaWQYXn6M/3V4tQr4qWzoobfr67gE+4wVCkfnJK+x1qZmiI1BAdSWyY7QWrLp30jrkVvef7OBwEc81c6U7gkFVo4XM5OtBY6BerCCZQy7wKc7r2NDpGYX7D/Ksp7K9KOE6doY3PrmzFTUoBSR5qUxrMQAIMJGaBUbO70VoLIQcEyqUybAXZJsb9u4Xh1DwJegn1cZHns3hZzuEDdk=
