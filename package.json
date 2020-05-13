@@ -1,0 +1,22 @@
+{
+  "name": "@assertly-org/assertly-oss",
+  "version": "1.0.0",
+  "description": "Testing Tool",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/assertly-org/assertly.git"
+  },
+  "author": "assertly-org",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/assertly-org/assertly/issues"
+  },
+  "homepage": "https://github.com/assertly-org/assertly#readme"
+}
