@@ -1,6 +1,4 @@
 <div align="center"> 
-
-  <img src="docs/img/logo_transparent.png" width="200"> 
   
   ![image](https://user-images.githubusercontent.com/50563470/81960314-c2b2d680-95de-11ea-868b-13706ef634ca.png)
 
