@@ -6,6 +6,8 @@ before_install:
 install: npm install
 
 # NPM_TOKEN was encrypted by the CLI and contained in the env below
+before_deploy:
+- cd ../
 
 deploy:
   provider: npm
