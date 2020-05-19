@@ -1,6 +1,6 @@
 <div align="center"> 
   
-  <img src="https://user-images.githubusercontent.com/50563470/81960314-c2b2d680-95de-11ea-868b-13706ef634ca.png" alt="assertly logo" width="200">
+  <img src="https://user-images.githubusercontent.com/50563470/81960314-c2b2d680-95de-11ea-868b-13706ef634ca.png" alt="assertly logo" width="250">
 
   <!-- ![image](https://user-images.githubusercontent.com/50563470/81960314-c2b2d680-95de-11ea-868b-13706ef634ca.png | width = 100) -->
 
