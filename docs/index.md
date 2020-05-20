@@ -2,6 +2,8 @@
 layout: default
 ---
 
+[docs](docs.md)
+
 # Assertly
 
 Assertly is the best unit test tool.
