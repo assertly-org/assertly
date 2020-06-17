@@ -156,7 +156,7 @@ export default class AssertlyClient implements ClientInterface {
         url: window.location.href,
         event: [message],
         // TODO: test set id should be set when creating/loading testset in the runner
-        testSetId: "60652b19-98f3-40b4-88f7-88c71dbc788a",
+        placeholder: null,
       }),
     });
   };

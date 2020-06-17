@@ -45,7 +45,7 @@ export default class TestGeneration extends ControllerBase {
   }
 
   @post('')
-  async createTest(event: Array<any>, testSetId: string): Promise<any> {
+  async createTest(event: Array<any>, placeholder: string): Promise<any> {
     try {
       if (!event) {
         this.input.res.send({ message: 'no test to generate' });
@@ -53,12 +53,10 @@ export default class TestGeneration extends ControllerBase {
       }
       console.log('this is the event sent', event);
 
-      this.createAst(event);
+      // this.createAst(event);
       // console.log(recast.parse(`export default class AssertlyClient implements ClientInterface {}`), {
       //   parser: require("recast/parsers/typescript")
       // })
-
-      console.log('this is the testparam sent', testSetId);
       const jestTestWriter = new testWriter('jest', event);
       let unitTests: any;
       unitTests = jestTestWriter.write(path.join(__dirname, '../../assertly_generated_tests'));
