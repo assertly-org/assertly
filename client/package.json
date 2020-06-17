@@ -1,0 +1,37 @@
+{
+  "name": "base-client",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npx webpack --config ./webpack.config.js",
+    "start": "npx webpack --watch --config ./webpack.config.js",
+    "build-ts": "tsc"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "devDependencies": {
+    "@babel/cli": "^7.7.4",
+    "@babel/core": "^7.7.4",
+    "@babel/plugin-proposal-class-properties": "^7.7.4",
+    "@babel/plugin-proposal-optional-chaining": "^7.8.3",
+    "@babel/plugin-transform-regenerator": "^7.8.7",
+    "@babel/preset-env": "^7.7.4",
+    "@types/node": "^14.0.13",
+    "babel-loader": "^8.0.5",
+    "core-js": "^3.4.3",
+    "prettier": "^1.18.2",
+    "ts-loader": "^7.0.5",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.9.5",
+    "webpack": "^4.28.3",
+    "webpack-cli": "^3.3.7"
+  },
+  "dependencies": {}
+}
