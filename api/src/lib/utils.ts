@@ -35,27 +35,38 @@ const babeloptions: ParserOptions = {
   ]
 };
 
-export async function createAst(event: Array<any>) {
+export async function createAst(filename: string) {
 
-  const astArray: File[] = [];
-  const readPromises: Promise<any>[] = [];
-  let fileArray: string[];
+  let data: string;
+  let ast: object;
 
-  event.forEach(event => readPromises.push(fs.promises.readFile(event.filename, 'utf8')));
-
-  // readFile will error out if file does not exist
   try {
-    fileArray = await Promise.all(readPromises);
+    data = await fs.promises.readFile(filename, 'utf8');
   } catch (err) {
     console.log(`error reading file`);
     return err;
   }
 
-  fileArray.forEach(file => astArray.push(babelparser.parse(file, babeloptions)));
+  ast = babelparser.parse(data, babeloptions);
 
-  return astArray;
+  return ast;
 }
 
-export function findComponentNames(astArray: Array<any>, event: Array<any>): string[] {
-  return ['durka'];
+export async function reconcileWithAst(event: any) {
+
+  const fileAst: any = await createAst(event?.filename);
+  const astComponentName = findComponentName(fileAst, event?.linenumber);
+
+  return {...event, astComponentName: astComponentName};
+}
+
+export function findComponentName(ast: any, lineNumber: number): string {
+  let astName: string;
+  for (let i = 1; i < ast?.tokens?.length; i++) {
+    if (ast.tokens[i - 1].value === 'class' || ast.tokens[i - 1].value === 'function') {
+      astName = ast.tokens[i].value;
+    }
+    if (ast.tokens[i].loc.start.line === lineNumber) break;
+  }
+  return astName;
 }
