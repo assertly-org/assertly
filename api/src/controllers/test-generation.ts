@@ -27,20 +27,14 @@ export default class TestGeneration extends ControllerBase {
         this.input.res.send({ message: 'no test to generate' });
         return;
       }
-      console.log('incoming event', event);
-
-      // const fileAst: any = await createAst(event[0]?.filename);
-      // if (fileAst?.errno) throw fileAst;
-      // console.log(findComponentName(fileAst, event[0].linenumber));
-      // console.log(fileAst);
 
       event.forEach(event => readPromises.push(reconcileWithAst(event)));
       const reconciledEvents = await Promise.all(readPromises);
       console.log('reconciled event', reconciledEvents);
 
-      const jestTestWriter = new testWriter('jest', event);
+      const jestTestWriter = new testWriter('jest', reconciledEvents);
       let unitTests: any;
-      unitTests = jestTestWriter.write(path.join(__dirname, '../../assertly_generated_tests'));
+      unitTests = jestTestWriter.write(path.join(__dirname, '../../assertly_generated_tests/'));
 
       // this.input.res.send({ast: fileAst});
 

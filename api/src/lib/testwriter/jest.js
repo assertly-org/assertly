@@ -6,7 +6,7 @@ import prettier from 'prettier';
 export class jest {
 
   async write(writeDir=null, input=null) {
-    // console.log(`writing jest test to ${writeDir} for input: \n`, input)
+    console.log(`writing jest test to ${writeDir} for input: \n`, input)
     /*
      From a set of tests, get a unique list of components
      */
@@ -15,12 +15,9 @@ export class jest {
 
 
     for (let actionCounter = 0; actionCounter < input.length; actionCounter++) {
-      const payload = input[actionCounter].payload;
-      // console.log('payload', payload);
+      const payload = input[actionCounter];
 
-      if (payload?.component) {
-        console.log('component', payload.component);
-
+      if (payload) {
         const componentPath = payload.filename;
         componentMap[componentPath] = payload;
       }
@@ -30,7 +27,7 @@ export class jest {
     for (const componentKey of Object.keys(componentMap)) {
       const component = componentMap[componentKey];
 
-      const componentName = component.component;
+      const componentName = component.astComponentName;
       const componentPath = componentKey;
 
       let testOutput = '';
