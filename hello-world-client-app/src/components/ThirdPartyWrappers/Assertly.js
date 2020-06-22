@@ -5,14 +5,11 @@ export default class Assertly extends Component {
     console.log("render assertly once only");
 
     let PORT;
-    if (process.env.PORT !== undefined) {
-      PORT = parseInt(process.env.PORT);
+    if (process.env.ASSERTLY_PORT !== undefined) {
+      PORT = parseInt(process.env.ASSERTLY_PORT);
     } else {
       PORT = 3002;
     }
-
-    console.log(process.env)
-    console.log(PORT)
 
     const useAssertly = true;
     const apiKey = "1a7e9a24-fc8d-4004-95d8-e7e9b8631bed";

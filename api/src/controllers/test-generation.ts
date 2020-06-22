@@ -48,26 +48,3 @@ export default class TestGeneration extends ControllerBase {
     };
   }
 }
-
-// console.log(recast.parse(data, {
-//   // parser: require('recast/parsers/typescript')
-//   parser: {
-//     parse(data: any) {
-//       return require('recast/parsers/typescript').parse(data, {
-//         // additional options note only sourcetype and strictmode are taken, added jsx to the plugins in node_modules **manually** _babel_options.js
-//       });
-//     }}
-// }));
-
-// await Promise.all(event.map(val => {
-//   if (fs.existsSync(val.filename)) {
-//     try {
-//       data = fs.readFileSync(val.filename, 'utf8');
-//     } catch (err) {
-//       console.log(`error reading file`);
-//     }
-//     astArray.push(babelparser.parse(data, babeloptions));
-//   } else {
-//     console.log(`can't find the file`, val.filename);
-//   }
-// }));
