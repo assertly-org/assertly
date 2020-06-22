@@ -2,8 +2,10 @@
 import app from './app';
 
 let PORT: number;
-if (process.env.PORT !== undefined) {
+if (process.env.ASSERTLY_PORT !== undefined) {
   PORT = parseInt(process.env.ASSERTLY_PORT);
+} else if (process.env.PORT !== undefined) {
+  PORT = parseInt(process.env.PORT);
 } else {
   PORT = 3002;
 }
