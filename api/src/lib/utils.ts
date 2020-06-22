@@ -40,13 +40,7 @@ export async function createAst(filename: string) {
   let data: string;
   let ast: object;
 
-  try {
-    data = await fs.promises.readFile(filename, 'utf8');
-  } catch (err) {
-    console.log(`error reading file`);
-    return err;
-  }
-
+  data = await fs.promises.readFile(filename, 'utf8');
   ast = babelparser.parse(data, babeloptions);
 
   return ast;
