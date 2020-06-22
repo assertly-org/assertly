@@ -110,7 +110,8 @@ export function functionStringify(obj: any): void {
   for (let k in obj) {
     if (obj[k] && {}.toString.call(obj[k]) === "[object Function]") {
       try {
-        obj[k] = "" + obj[k];
+        // obj[k] = "" + obj[k];
+        obj[k] = "[Function]"
       } catch (e) {
         console.error("Error stringifying prop", e);
       }
