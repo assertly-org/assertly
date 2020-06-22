@@ -39,7 +39,11 @@ export default class TestGeneration extends ControllerBase {
       // this.input.res.send({ast: fileAst});
 
     } catch (e) {
-      console.error('createTest error: ', e);
+      if (e instanceof TypeError) {
+        console.log(`Error creating test, it is likely the item selected was not a React Component.`);
+      } else {
+        console.error('createTest error: ', e);
+      }
       this.input.res.sendStatus(500);
       return;
     }
