@@ -3,3 +3,4 @@ repos
 cypress
 tests_output
 node_modules
+assertly_generated_tests/
