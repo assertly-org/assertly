@@ -12,6 +12,28 @@
 
 # assertly
 
+Assertly is an automated unit test generation tool which creates jest tests of React components.
+
+## Getting Started
+
+The Assertly app repo is divided in three portions, api, client, and the react component. 
+
+Clone the repo, then install and and start the API by typing "npm install" then "npm run start" in the api directory. By default, this will start an express server in port 3002 which will write the unit tests as well as serve the client to the Assertly component in your React app. If a different port is preferred, you may set a system variable of ASSERTLY_PORT to use instead of the default.  
+
+The component to drop into your app is in the react directory. Import this component and place it at the head of your React app. No props are necessary to pass to the Assertly component. The purpose of the component is to execute an immediately invoked function expression which retrieves the client code from the running server. 
+
+No action is needed in the client directory; it contains the javascript that the api is serving to the Assertly component.
+
+When generated, tests will be placed in the assertly_generated_tests sub-directory of the api directory.
+
+## Requirements
+
+Assertly uses the current stable release of node. Please ensure your node environment is configured appropriately. 
+
+## Example Application
+
+For your convenience, an example application called "hello-world-client-app" is available for use. 
+
 # Copyright & License
 
 Copyright (c) 2020 Assertly Foundation - Released under the [GNU license](LICENSE). Assertly and the Assertly Logo are trademarks of Assertly Foundation. 
