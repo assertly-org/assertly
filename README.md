@@ -32,7 +32,7 @@ Assertly uses the current stable release of node. Please ensure your node enviro
 
 ## Example Application
 
-For your convenience, an example application called "hello-world-client-app" is available for use. 
+For your convenience, an example application called "hello-world-client-app" is available for use. This example app uses react-scripts in the package.json. "npm install" then "npm run start" will launch the application on port 3000 in localhost. Note that the Assertly component has been inserted in App.js in the src sub-directory.
 
 # Copyright & License
 
