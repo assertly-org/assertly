@@ -34,6 +34,10 @@ Assertly uses the current stable release of node. Please ensure your node enviro
 
 For your convenience, an example application called "hello-world-client-app" is available for use. This example app uses react-scripts in the package.json. "npm install" then "npm run start" will launch the application on port 3000 in localhost. Note that the Assertly component has been inserted in App.js in the src sub-directory.
 
+## Running Your Tests
+
+Unit tests automatically created by assertly shallow renders the component and asserts that "it exists and is not null". The test assumes the availability of Jest, Enzyme and Babel. Note that the Babel @babel/plugin-proposal-class-properties needs to be included in the plugins portion of your Babel config file for the test to run successfully.
+
 # Copyright & License
 
 Copyright (c) 2020 Assertly Foundation - Released under the [GNU license](LICENSE). Assertly and the Assertly Logo are trademarks of Assertly Foundation. 
