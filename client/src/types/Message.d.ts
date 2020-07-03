@@ -15,4 +15,5 @@ export default interface Message {
   textContent: string;
   timestamp: number;
   value: string;
+  writeTestLocation: string;
 }

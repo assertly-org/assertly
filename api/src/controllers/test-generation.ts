@@ -19,7 +19,7 @@ export default class TestGeneration extends ControllerBase {
 
 
   @post('')
-  async createTest(event: Array<any>, placeholder: string): Promise<any> {
+  async createTest(event: Array<any>): Promise<any> {
     try {
       const readPromises: Promise<any>[] = [];
 
