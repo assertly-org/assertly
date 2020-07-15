@@ -66,8 +66,8 @@ export default class AssertlyClient implements ClientInterface {
       componentName: getComponentName(reactComponent?._debugOwner),
       coordinates: getCoordinates(event),
       // filename: reactComponent?._debugSource?.fileName,
-      filename: getComponentFileName(reactComponent,10)?.filename,
-      linenumber: getComponentFileName(reactComponent,10)?.linenumber,
+      filename: getComponentFileName(reactComponent,10,[])[0]?.filename,
+      linenumber: getComponentFileName(reactComponent,10,[])[0]?.linenumber,
       href: linkTarget.href ? linkTarget.href : null,
       keyCode: (event as KeyboardEvent).keyCode
         ? (event as KeyboardEvent).keyCode

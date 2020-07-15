@@ -1,19 +1,21 @@
 import Coordinates from "./types/Coordinates";
 
-export function getComponentFileName(component: any, maxNest: number): any {
+export function getComponentFileName(component: any, maxNest: number, resultArray: any): any {
   
 
   // console.log('findFileName: ', component)
 
   if (!component || maxNest === 0) {
-    return null
+    console.log('resultArray: ', resultArray)
+    return resultArray
   }
 
   if (component?._debugSource?.fileName) {
-
-    return {filename: component?._debugSource?.fileName, linenumber: component?._debugSource?.lineNumber}
+    const props = getComponentProps(component)
+    resultArray.push({filename: component?._debugSource?.fileName, linenumber: component?._debugSource?.lineNumber, props: props})
+    return getComponentFileName(component?._debugOwner,maxNest-1,resultArray)
   } else {
-    return getComponentFileName(component?._debugOwner,maxNest-1)
+    return getComponentFileName(component?._debugOwner,maxNest-1,resultArray)
   }
 
 }
