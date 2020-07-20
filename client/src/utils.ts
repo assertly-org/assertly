@@ -96,7 +96,7 @@ export function findReactElement(target: EventTarget): any {
   const targetMap = target as { [key: string]: any };
 
   const internalInstance = key ? targetMap[key] : null;
-  console.log('React Node if Found: ', internalInstance)
+  // console.log('React Node if Found: ', internalInstance)
   if (internalInstance == null) return null;
 
   // console.log('internalInstance2: ', internalInstance)

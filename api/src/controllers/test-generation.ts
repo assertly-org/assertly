@@ -28,11 +28,11 @@ export default class TestGeneration extends ControllerBase {
         return;
       }
 
-      event.forEach(event => readPromises.push(reconcileWithAst(event)));
-      const reconciledEvents = await Promise.all(readPromises);
-      console.log('reconciled event', reconciledEvents);
+      // event.forEach(event => readPromises.push(reconcileWithAst(event)));
+      // const reconciledEvents = await Promise.all(readPromises);
+      // console.log('reconciled event', reconciledEvents);
 
-      const jestTestWriter = new testWriter('jest', reconciledEvents);
+      const jestTestWriter = new testWriter('jest', event);
       let unitTests: any;
       unitTests = jestTestWriter.write(path.join(__dirname, '../../assertly_generated_tests/'));
 

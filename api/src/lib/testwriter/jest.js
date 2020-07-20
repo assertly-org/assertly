@@ -18,7 +18,8 @@ export class jest {
       const payload = input[actionCounter];
 
       if (payload) {
-        const componentPath = payload.filename;
+        // component specific things are now in component info key
+        const componentPath = payload.componentInfo[0]?.filename;
         componentMap[componentPath] = payload;
       }
     }
@@ -27,7 +28,9 @@ export class jest {
     for (const componentKey of Object.keys(componentMap)) {
       const component = componentMap[componentKey];
 
-      const componentName = component.astComponentName;
+      // component specific things are now in component info key
+      const componentName = component.componentInfo[0]?.componentName;
+      const props = component.componentInfo[0]?.props;
       const componentPath = componentKey;
 
       let testOutput = '';
@@ -36,7 +39,7 @@ export class jest {
 
       testOutput += this.writeOuterDescribe(componentName);
 
-      testOutput += this.writePropsAndShallowWrapper(component.props, componentName);
+      testOutput += this.writePropsAndShallowWrapper(props, componentName);
 
       testOutput += this.basicRenderTest();
 

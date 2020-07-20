@@ -46,28 +46,25 @@ export default class AssertlyClient implements ClientInterface {
     const reactComponent = event.target ? findReactElement(event.target) : null;
     if (reactComponent !== this.previousComponent) {
       this.componentEventCache.forEach((msg) => {
+        console.log('in the reconcile')
         this.sendEvent(msg);
       });
       this.clearEventCache();
     }
   };
 
-  getMessage = (reactComponent: any, event: KeyboardEvent | Event ): Message => {
-    const target = event.target || event.srcElement;
-    const inputTarget = target as HTMLInputElement;
-    const linkTarget = target as HTMLLinkElement;
-
-    const props = getComponentProps(reactComponent);
-
-    const filenames = getComponentInfo(reactComponent, 10, [])
+  createPopupMenu = (message: Message) => {
     
-    console.log('event in getMessage: ', event)
-
     const eventTime = new Date().getTime()
     const divID = "componentMenu" + eventTime
     const mouseEvent = event as MouseEvent;
     const menuDiv = document.createElement("DIV");
+
+    const previousMenus = Array.from(document.getElementsByClassName('componentMenu'));
+    previousMenus?.map( (val:any) => val.remove())
+
     menuDiv.setAttribute("id", divID);
+    menuDiv.setAttribute("class", 'componentMenu');
     document.body.appendChild(menuDiv);
     menuDiv.style.position = "absolute";
     menuDiv.style.left = mouseEvent.x + 'px';
@@ -75,79 +72,83 @@ export default class AssertlyClient implements ClientInterface {
     menuDiv.style.zIndex = '5';
 
 
-    filenames.map((val: any) => {
+    message?.componentInfo?.map((val: any) => {
       const btn = document.createElement("BUTTON");   
+      btn.style.width = '150px';
       btn.innerHTML = val?.componentName;                 
       if(btn.innerHTML) {
-        btn.addEventListener('click', () => this.componentMenuClick(event, divID))
+        btn.addEventListener('click', () => this.componentMenuClick(event, divID, message))
         menuDiv.appendChild(btn);             
         const br = document.createElement("br");
         menuDiv.appendChild(br); 
       }
     })
-    
-    ///
-    const messageArray = getComponentInfo(reactComponent, 10, []).map( (val: any) => {
-      // componentName, fileName, and lineNumber are already in the object returned
-      val.action = event.type,
-      val.checked = event?.target?.hasOwnProperty("checked")
-        ? inputTarget.checked
-        : null,
-      val.coordinates = getCoordinates(event),
-      val.href = linkTarget.href ? linkTarget.href : null,
-      val.keyCode = (event as KeyboardEvent).keyCode
-        ? (event as KeyboardEvent).keyCode
-        : null,
-      props,
-      val.tagName = inputTarget.tagName,
-      val.tagType = inputTarget.type,
-      val.textContent = inputTarget.textContent || inputTarget.innerText,
-      val.timestamp = new Date().getTime(),
-      val.value = inputTarget.value,
-      val.writeTestLocation = ''
-      return val
-    });
-    
-    ///
 
-    // console.log('messageArray: ', messageArray)
+    const btn = document.createElement("BUTTON");   
+    btn.style.width = '150px';
+    btn.innerHTML = 'Cancel';  
+    btn.addEventListener('click', () => this.removeSingleMenu(divID))
+    menuDiv.appendChild(btn);     
+  }
 
-    return {
-      action: event.type,
-      checked: event?.target?.hasOwnProperty("checked")
-        ? inputTarget.checked
-        : null,
-      componentName: getComponentName(reactComponent?._debugOwner),
-      coordinates: getCoordinates(event),
-      filename: getComponentInfo(reactComponent, 10, [])[0]?.filename,
-      linenumber: getComponentInfo(reactComponent, 10, [])[0]?.linenumber,
-      href: linkTarget.href ? linkTarget.href : null,
-      keyCode: (event as KeyboardEvent).keyCode
-        ? (event as KeyboardEvent).keyCode
-        : null,
-      props,
-      tagName: inputTarget.tagName,
-      tagType: inputTarget.type,
-      textContent: inputTarget.textContent || inputTarget.innerText,
-      timestamp: new Date().getTime(),
-      value: inputTarget.value,
-      writeTestLocation: ''
-    };
-  };
-
-  componentMenuClick = (event: any, divID: any): any => {
-    console.log('this is the click call back: ', event)
-    event?.stopPropagation()
+  removeSingleMenu = (divID: any) => {
     const menuDiv = document.getElementById(divID);
     menuDiv?.remove()
+  }
+
+  componentMenuClick = (event: any, divID: any, message: Message): any => {
+    console.log('this is the click call back: ', event)
+    console.log('this is the message in the callback: ', message.componentInfo)
+    event?.stopPropagation()
+    this.sendEvent({
+      ...message, 
+      componentInfo: message.componentInfo?.filter( (val:any) => val.componentName === event.target?.innerHTML)
+    })
+
+    this.removeSingleMenu(divID)
+    // const menuDiv = document.getElementById(divID);
+    // menuDiv?.remove()
     
   }
+
+  getMessage = (reactComponent: any, event: KeyboardEvent | Event ): Message => {
+    const target = event.target || event.srcElement;
+    const inputTarget = target as HTMLInputElement;
+    const linkTarget = target as HTMLLinkElement;
+
+    const props = getComponentProps(reactComponent);
+    const filenames = getComponentInfo(reactComponent, 10, [])
+
+    const message: Message =  {
+      // componentName, fileName, and lineNumber are already in the object returned
+      action : event.type,
+      checked : event?.target?.hasOwnProperty("checked")
+        ? inputTarget.checked
+        : null,
+      coordinates : getCoordinates(event),
+      href : linkTarget.href ? linkTarget.href : null,
+      keyCode : (event as KeyboardEvent).keyCode
+        ? (event as KeyboardEvent).keyCode
+        : null,
+      tagName : inputTarget.tagName,
+      tagType : inputTarget.type,
+      textContent : inputTarget.textContent || inputTarget.innerText,
+      timestamp : new Date().getTime(),
+      value : inputTarget.value,
+      writeTestLocation : '',
+      componentInfo: getComponentInfo(reactComponent, 10, [])
+    };
+
+    return message
+  };
+
+
 
   recordEvent = (event: Event) => {
     const nodeTarget = event.target as Node;
 
+    // if the click is on a menu that pops up, dont go through the record event logic
     if (nodeTarget?.parentElement?.getAttribute("id")?.includes('componentMenu')) {
-      console.log('Menu event, no message sent');
       return;
     }
     if (!event.target) return;
@@ -166,37 +167,42 @@ export default class AssertlyClient implements ClientInterface {
       }
 
       const reactComponent = findReactElement(event.target);
-      console.log('reactComponent: ', reactComponent)
       const msg: Message = this.getMessage(reactComponent, event);
-      console.log('record event msg', msg)
+      console.log('reactComponent and message in RECORD_EVENT: ', reactComponent, msg)
 
       localStorage.setItem("lastEvent", JSON.stringify(msg));
       this.previousMsg = msg;
 
-      if (
-        // if there is no previous component or the previous component is the same as the component you just clicked on
-        !this.previousComponent ||
-        (this.previousComponent && this.previousComponent === reactComponent)
-      ) {
-        this.previousComponent = reactComponent;
-        if (
-          this.previousComponent &&
-          msg.checked !== null &&
-          msg.action === "click"
-        ) {
-          this.sendEvent(msg);
-          return;
-        }
-        this.componentEventCache.push(msg);
+      // if (
+      //   // if there is no previous component or the previous component is the same as the component you just clicked on
+      //   !this.previousComponent ||
+      //   (this.previousComponent && this.previousComponent === reactComponent)
+      // ) {
+      //   this.previousComponent = reactComponent;
+      //   if (
+      //     this.previousComponent &&
+      //     msg.checked !== null &&
+      //     msg.action === "click"
+      //   ) {
+      //     // message is sent when something in the popup menu is selected
+      //     this.createPopupMenu(msg);
+      //     // this.sendEvent(msg);
+      //     return;
+      //   }
 
-        return;
-      } else {
-        this.clearEventCache();
-      }
+      //   //pushing a message to the event cache sends it to the api when the reconcile callback is called
+      //   this.componentEventCache.push(msg);
+
+      //   return;
+      // } else {
+      //   this.clearEventCache();
+      // }
 
       this.previousComponent = reactComponent;
 
-      this.sendEvent(msg);
+      // message is sent when something in the popup menu is selected
+      this.createPopupMenu(msg);
+      // this.sendEvent(msg);
     } catch (e) {
       console.error("Error recording event", e);
     }
@@ -208,8 +214,13 @@ export default class AssertlyClient implements ClientInterface {
     const writeLocation = (window as { [key: string]: any })["dataLayer"][0]["testLocation"]
     const url = `//localhost:3002/api/accounts/${accountId}/events/`;
     // console.log('this is the message: ', message);
-    console.log('this is the write location: ', writeLocation, accountId);
-    message.writeTestLocation = writeLocation;
+    // console.log('this is the write location: ', writeLocation, accountId);
+    console.log('this is the message in SEND_EVENT: ', message)
+    
+    message?.componentInfo?.map( (val:any) => {
+      val.writeTestLocation = writeLocation
+      return val
+    });
 
     await fetch(url, {
       method: "POST",
@@ -221,7 +232,7 @@ export default class AssertlyClient implements ClientInterface {
       },
       body: JSON.stringify({
         url: window.location.href,
-        event: [message],
+        event: message,
         // TODO: test set id should be set when creating/loading testset in the runner
         placeholder: null,
       }),
