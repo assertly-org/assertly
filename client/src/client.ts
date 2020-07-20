@@ -3,7 +3,7 @@ import {
   getCoordinates,
   getComponentName,
   getComponentProps,
-  getComponentFileName
+  getComponentInfo
 } from "./utils";
 
 
@@ -12,7 +12,7 @@ import ClientInterface from "./types/Client";
 import Message from "./types/Message";
 import { EventType } from "./types/EventType";
 
-interface Component {}
+interface Component { }
 
 export default class AssertlyClient implements ClientInterface {
   eventsToRecord: EventType[] = ["click", "change"];
@@ -52,12 +52,66 @@ export default class AssertlyClient implements ClientInterface {
     }
   };
 
-  getMessage = (reactComponent: any, event: KeyboardEvent | Event): Message => {
+  getMessage = (reactComponent: any, event: KeyboardEvent | Event ): Message => {
     const target = event.target || event.srcElement;
     const inputTarget = target as HTMLInputElement;
     const linkTarget = target as HTMLLinkElement;
 
     const props = getComponentProps(reactComponent);
+
+    const filenames = getComponentInfo(reactComponent, 10, [])
+    
+    console.log('event in getMessage: ', event)
+
+    const eventTime = new Date().getTime()
+    const divID = "componentMenu" + eventTime
+    const mouseEvent = event as MouseEvent;
+    const menuDiv = document.createElement("DIV");
+    menuDiv.setAttribute("id", divID);
+    document.body.appendChild(menuDiv);
+    menuDiv.style.position = "absolute";
+    menuDiv.style.left = mouseEvent.x + 'px';
+    menuDiv.style.top = mouseEvent.y +'px';
+    menuDiv.style.zIndex = '5';
+
+
+    filenames.map((val: any) => {
+      const btn = document.createElement("BUTTON");   
+      btn.innerHTML = val?.componentName;                 
+      if(btn.innerHTML) {
+        btn.addEventListener('click', () => this.componentMenuClick(event, divID))
+        menuDiv.appendChild(btn);             
+        const br = document.createElement("br");
+        menuDiv.appendChild(br); 
+      }
+    })
+    
+    ///
+    const messageArray = getComponentInfo(reactComponent, 10, []).map( (val: any) => {
+      // componentName, fileName, and lineNumber are already in the object returned
+      val.action = event.type,
+      val.checked = event?.target?.hasOwnProperty("checked")
+        ? inputTarget.checked
+        : null,
+      val.coordinates = getCoordinates(event),
+      val.href = linkTarget.href ? linkTarget.href : null,
+      val.keyCode = (event as KeyboardEvent).keyCode
+        ? (event as KeyboardEvent).keyCode
+        : null,
+      props,
+      val.tagName = inputTarget.tagName,
+      val.tagType = inputTarget.type,
+      val.textContent = inputTarget.textContent || inputTarget.innerText,
+      val.timestamp = new Date().getTime(),
+      val.value = inputTarget.value,
+      val.writeTestLocation = ''
+      return val
+    });
+    
+    ///
+
+    // console.log('messageArray: ', messageArray)
+
     return {
       action: event.type,
       checked: event?.target?.hasOwnProperty("checked")
@@ -65,9 +119,8 @@ export default class AssertlyClient implements ClientInterface {
         : null,
       componentName: getComponentName(reactComponent?._debugOwner),
       coordinates: getCoordinates(event),
-      // filename: reactComponent?._debugSource?.fileName,
-      filename: getComponentFileName(reactComponent,10,[])[0]?.filename,
-      linenumber: getComponentFileName(reactComponent,10,[])[0]?.linenumber,
+      filename: getComponentInfo(reactComponent, 10, [])[0]?.filename,
+      linenumber: getComponentInfo(reactComponent, 10, [])[0]?.linenumber,
       href: linkTarget.href ? linkTarget.href : null,
       keyCode: (event as KeyboardEvent).keyCode
         ? (event as KeyboardEvent).keyCode
@@ -82,13 +135,21 @@ export default class AssertlyClient implements ClientInterface {
     };
   };
 
+  componentMenuClick = (event: any, divID: any): any => {
+    console.log('this is the click call back: ', event)
+    event?.stopPropagation()
+    const menuDiv = document.getElementById(divID);
+    menuDiv?.remove()
+    
+  }
+
   recordEvent = (event: Event) => {
     const nodeTarget = event.target as Node;
 
-    if (this.previousMsg && this.previousMsg.timestamp === event.timeStamp)
+    if (nodeTarget?.parentElement?.getAttribute("id")?.includes('componentMenu')) {
+      console.log('Menu event, no message sent');
       return;
-    if (event.type === "load" && nodeTarget.nodeName === "#document") return;
-
+    }
     if (!event.target) return;
 
     try {
@@ -113,6 +174,7 @@ export default class AssertlyClient implements ClientInterface {
       this.previousMsg = msg;
 
       if (
+        // if there is no previous component or the previous component is the same as the component you just clicked on
         !this.previousComponent ||
         (this.previousComponent && this.previousComponent === reactComponent)
       ) {
@@ -148,7 +210,7 @@ export default class AssertlyClient implements ClientInterface {
     // console.log('this is the message: ', message);
     console.log('this is the write location: ', writeLocation, accountId);
     message.writeTestLocation = writeLocation;
-    
+
     await fetch(url, {
       method: "POST",
       mode: "cors",
@@ -169,3 +231,4 @@ export default class AssertlyClient implements ClientInterface {
 
 (<any>window).eventRecorder = new AssertlyClient();
 (<any>window).eventRecorder.start();
+

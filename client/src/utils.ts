@@ -1,21 +1,28 @@
 import Coordinates from "./types/Coordinates";
 
-export function getComponentFileName(component: any, maxNest: number, resultArray: any): any {
+export function getComponentInfo(component: any, maxNest: number, resultArray: any): any {
   
 
   // console.log('findFileName: ', component)
 
   if (!component || maxNest === 0) {
-    console.log('resultArray: ', resultArray)
+    // console.log('resultArray: ', resultArray)
     return resultArray
   }
 
   if (component?._debugSource?.fileName) {
-    const props = getComponentProps(component)
-    resultArray.push({filename: component?._debugSource?.fileName, linenumber: component?._debugSource?.lineNumber, props: props})
-    return getComponentFileName(component?._debugOwner,maxNest-1,resultArray)
+    // the owner of the node where the 'source' filename exists is the file that you want the props for 
+    const props = getComponentProps(component?._debugOwner)
+    const name = getComponentName(component?._debugOwner)
+    resultArray.push({
+      filename: component?._debugSource?.fileName, 
+      // the line number is really for the next component down in the tree that is being called from the 'filename'
+      linenumber: component?._debugSource?.lineNumber, 
+      props: props, 
+      componentName: name})
+    return getComponentInfo(component?._debugOwner,maxNest-1,resultArray)
   } else {
-    return getComponentFileName(component?._debugOwner,maxNest-1,resultArray)
+    return getComponentInfo(component?._debugOwner,maxNest-1,resultArray)
   }
 
 }
