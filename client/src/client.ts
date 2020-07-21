@@ -146,6 +146,7 @@ export default class AssertlyClient implements ClientInterface {
 
   recordEvent = (event: Event) => {
     const nodeTarget = event.target as Node;
+    const mouseEvent = event as MouseEvent;
 
     // if the click is on a menu that pops up, dont go through the record event logic
     if (nodeTarget?.parentElement?.getAttribute("id")?.includes('componentMenu')) {
@@ -201,7 +202,7 @@ export default class AssertlyClient implements ClientInterface {
       this.previousComponent = reactComponent;
 
       // message is sent when something in the popup menu is selected
-      this.createPopupMenu(msg);
+      if (mouseEvent?.metaKey) this.createPopupMenu(msg);
       // this.sendEvent(msg);
     } catch (e) {
       console.error("Error recording event", e);
