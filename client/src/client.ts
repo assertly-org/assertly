@@ -72,6 +72,14 @@ export default class AssertlyClient implements ClientInterface {
     menuDiv.style.zIndex = '5';
 
 
+    // const HeaderBtn = document.createElement("BUTTON");   
+    // HeaderBtn.style.width = '150px';
+    // HeaderBtn.innerHTML = 'Assertly';
+    // (HeaderBtn as HTMLButtonElement).disabled = true;
+    // menuDiv.appendChild(HeaderBtn);   
+    // const br = document.createElement("br");
+    // menuDiv.appendChild(br);   
+
     message?.componentInfo?.map((val: any) => {
       const btn = document.createElement("BUTTON");   
       btn.style.width = '150px';
@@ -84,11 +92,11 @@ export default class AssertlyClient implements ClientInterface {
       }
     })
 
-    const btn = document.createElement("BUTTON");   
-    btn.style.width = '150px';
-    btn.innerHTML = 'Cancel';  
-    btn.addEventListener('click', () => this.removeSingleMenu(divID))
-    menuDiv.appendChild(btn);     
+    const CancelBtn = document.createElement("BUTTON");   
+    CancelBtn.style.width = '150px';
+    CancelBtn.innerHTML = 'Cancel';  
+    CancelBtn.addEventListener('click', () => this.removeSingleMenu(divID))
+    menuDiv.appendChild(CancelBtn);     
   }
 
   removeSingleMenu = (divID: any) => {
@@ -112,12 +120,24 @@ export default class AssertlyClient implements ClientInterface {
   }
 
   getMessage = (reactComponent: any, event: KeyboardEvent | Event ): Message => {
+    
+    // function to use in array reduce
+    const findClickHandler = (accumulator : any , currentValue : any) => {
+      if (currentValue.props?.onClick) {
+        return { 
+          ...currentValue }}};
+
     const target = event.target || event.srcElement;
     const inputTarget = target as HTMLInputElement;
     const linkTarget = target as HTMLLinkElement;
 
-    const props = getComponentProps(reactComponent);
-    const filenames = getComponentInfo(reactComponent, 10, [])
+    const componentInfo = getComponentInfo(reactComponent, 10, [])
+
+    // find the closest click handler that would have been triggered
+    const clickHandler = componentInfo?.slice(0)?.reverse()?.reduce(findClickHandler,{}) || null
+
+
+    // console.log('component info in GET_MESSAGE: ', componentInfo, clickHandler)
 
     const message: Message =  {
       // componentName, fileName, and lineNumber are already in the object returned
@@ -136,7 +156,9 @@ export default class AssertlyClient implements ClientInterface {
       timestamp : new Date().getTime(),
       value : inputTarget.value,
       writeTestLocation : '',
-      componentInfo: getComponentInfo(reactComponent, 10, [])
+      componentInfo: componentInfo,
+      clickHandlerComponent: clickHandler
+
     };
 
     return message

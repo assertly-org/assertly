@@ -7,11 +7,14 @@ export class jest {
 
   async write(writeDir=null, input=null) {
     console.log(`writing jest test to ${writeDir} for input: \n`, input)
+    
     /*
      From a set of tests, get a unique list of components
      */
     let componentMap = {};
     let unitTests = [];
+
+    
 
 
     for (let actionCounter = 0; actionCounter < input.length; actionCounter++) {
@@ -32,6 +35,8 @@ export class jest {
       const componentName = component.componentInfo[0]?.componentName;
       const props = component.componentInfo[0]?.props;
       const componentPath = componentKey;
+      
+      // const clickHandler = componentInfo[0]?.clickHandler?.function?.substring(componentInfo[0]?.clickHandler?.function?.indexOf('{')+1) || null
 
       let testOutput = '';
       let componentImport = `import ${componentName} from '${componentPath}';`;
@@ -82,6 +87,26 @@ export class jest {
         
         configure({ adapter: new Adapter() });
       `;
+  }
+
+  writeOpenHandler() {
+    return `
+      const handlers = {
+    `
+  }
+
+  writeTwoCloseCurly() {
+    return `
+    }};
+    `
+
+  }
+
+  writeHandlerObject(handler) {
+    return `
+        ${handler?.handler}() {
+
+    `
   }
 
   writeOuterDescribe(describeName) {
