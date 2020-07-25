@@ -22,38 +22,71 @@ export class jest {
 
       if (payload) {
         // component specific things are now in component info key
-        const componentPath = payload.componentInfo[0]?.filename;
+        const componentPath = payload.componentInfo?.filename;
         componentMap[componentPath] = payload;
       }
     }
 
+    
 
+    
     for (const componentKey of Object.keys(componentMap)) {
       const component = componentMap[componentKey];
-
-      // component specific things are now in component info key
-      const componentName = component.componentInfo[0]?.componentName;
-      const props = component.componentInfo[0]?.props;
-      const componentPath = componentKey;
-      
-      // const clickHandler = componentInfo[0]?.clickHandler?.function?.substring(componentInfo[0]?.clickHandler?.function?.indexOf('{')+1) || null
-
       let testOutput = '';
-      let componentImport = `import ${componentName} from '${componentPath}';`;
-      testOutput += this.writeHead(componentImport);
+      let componentImport = ''
 
-      testOutput += this.writeOuterDescribe(componentName);
+      testOutput += this.writeHead();
 
-      testOutput += this.writePropsAndShallowWrapper(props, componentName);
+      // write the test for the component that caused the click, by mounting and clicking
+      if(component.clickHandlerComponent) {
 
-      testOutput += this.basicRenderTest();
+        const clickComponentName = component.clickHandlerComponent?.componentName;
+        const clickProps = component.clickHandlerComponent?.props;
+        const clickComponentPath = component.clickHandlerComponent?.filename;
+        const clickHandler = '{return true}'
 
-      // close outer describe
-      testOutput += this.closeBlock();
+        componentImport = `import ${clickComponentName} from '${clickComponentPath}';`;
+        testOutput = componentImport + testOutput;
+
+        testOutput += this.writeHandlerObject(clickHandler)
+
+        testOutput += this.writeOuterDescribe(clickComponentName);
+        testOutput += this.writeSpy();
+        testOutput += this.writeClickPropsAndShallowWrapper(clickProps, clickComponentName);
+        
+        testOutput += this.basicClickTest();
+        testOutput += this.basicRenderTest();
+  
+        // close outer describe
+        testOutput += this.closeBlock();
+
+      }
+
+      // write the tests for the component(s), do not include the component that caused the click; that test is included seperately
+      if(component.componentInfo?.componentName !== component.clickHandlerComponent?.componentName) {
+        // component specific things are now in component info key
+        const componentName = component.componentInfo?.componentName;
+        const props = component.componentInfo?.props;
+        const componentPath = componentKey;
+        // 
+        componentImport = `import ${componentName} from '${componentPath}';`;
+        testOutput = componentImport + testOutput;
+
+        testOutput += this.writeOuterDescribe(componentName);
+
+        testOutput += this.writePropsAndShallowWrapper(props, componentName);
+
+        testOutput += this.basicRenderTest();
+
+        // close outer describe
+        testOutput += this.closeBlock();
+      }
+
+      //************************************************************//
 
       const prettyTestOutput = prettier.format(testOutput, {parser: 'babel'});
 
-      console.log('this is the pretty test output', prettyTestOutput)
+      console.log(prettyTestOutput)
       // save the test outputs for a return if the user is not writing to a file
       unitTests.push(prettyTestOutput)
 
@@ -77,16 +110,20 @@ export class jest {
     }
   }
 
-  writeHead(componentImport) {
+  writeHead() {
     return `
         import React from 'react';
         import { configure, shallow } from 'enzyme';
         import Adapter from 'enzyme-adapter-react-16';
-        
-        ${componentImport}
-        
         configure({ adapter: new Adapter() });
+
       `;
+  }
+
+  writeSpy() {
+    return `
+    const spy = jest.spyOn(handlers, 'onClick');
+    `
   }
 
   writeOpenHandler() {
@@ -95,9 +132,15 @@ export class jest {
     `
   }
 
-  writeTwoCloseCurly() {
+  writeClickFunction(clickHandler) {
     return `
-    }};
+      onClick() ${clickHandler}
+    `
+  }
+
+  writeCloseCurly() {
+    return `
+    };
     `
 
   }
@@ -128,6 +171,14 @@ export class jest {
     `;
   }
 
+  writeClickProps(props) {
+    delete props.onClick;
+    const propString = JSON.stringify(props).replace("}", ", onClick: () => handlers.onClick() }");
+    return `
+      const props = ${propString};
+    `;
+  }
+
   writeShallowWrapper(componentName) {
     return `
       const wrapper = shallow(<${componentName} {...props} />);
@@ -135,8 +186,18 @@ export class jest {
   }
 
   writePropsAndShallowWrapper(props, componentName) {
+    
     return `
       ${this.writeProps(props)}
+      
+      ${this.writeShallowWrapper(componentName)}
+    `;
+  }
+
+  writeClickPropsAndShallowWrapper(props, componentName) {
+    
+    return `
+      ${this.writeClickProps(props)}
       
       ${this.writeShallowWrapper(componentName)}
     `;
@@ -148,6 +209,14 @@ export class jest {
     `;
   }
 
+  writeHandlerObject(clickHandler) {    
+    return `
+      ${this.writeOpenHandler()}
+      ${this.writeClickFunction(clickHandler)}
+      ${this.writeCloseCurly()}
+    `
+  }
+
   basicRenderTest() {
     return `
       ${this.writeItBlock('exists and is not null')}
@@ -155,6 +224,15 @@ export class jest {
         expect(wrapper.getElement()).not.toBe(null);
       ${this.closeBlock()}
     `;
+  }
+
+  basicClickTest() {
+    return `
+      wrapper.simulate('click');
+      ${this.writeItBlock('is successfully clicked')}
+        expect(spy).toHaveBeenCalled();
+      ${this.closeBlock()}
+  `;
   }
 
   getPathArr(componentPath) {
