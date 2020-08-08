@@ -10,6 +10,8 @@ if (process.env.ASSERTLY_PORT !== undefined) {
   PORT = 3002;
 }
 
+// console.log('process env: ', process.env);
+
 /**
  * Start Express server.
  */

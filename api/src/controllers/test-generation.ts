@@ -34,6 +34,7 @@ export default class TestGeneration extends ControllerBase {
 
       const jestTestWriter = new testWriter('jest', event);
       let unitTests: any;
+
       unitTests = jestTestWriter.write(path.join(__dirname, '../../assertly_generated_tests/'));
 
       // this.input.res.send({ast: fileAst});

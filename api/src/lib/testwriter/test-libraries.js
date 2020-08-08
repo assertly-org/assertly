@@ -1,4 +1,6 @@
 import {jest} from './jest';
+const fs = require('fs');
+const path = require('path')
 
 export class testWriter {
   constructor(strategy, tests) {
@@ -12,10 +14,15 @@ export class testWriter {
     }
     this._writeStrategy = strat;
     this._tests = tests;
+
   }
+
+
 
   // write is a method of the testWriter class
   write(path) {
+
     return this._writeStrategy.write(path, this._tests);
+    // return this._writeStrategy.write(this._tests[0]?.writeTestLocation, this._tests);
   }
 }
