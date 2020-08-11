@@ -13,7 +13,7 @@ module.exports = {
 
   // Automatically clear mock calls and instances between every test
   clearMocks: true,
-  rootDir: "tests",
+  rootDir: "api",
 
   // Indicates whether the coverage information should be collected while executing the test
   // collectCoverage: false,

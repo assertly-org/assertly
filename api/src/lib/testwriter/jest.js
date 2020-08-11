@@ -1,7 +1,9 @@
 const {promisify} = require('util');
 const fs = require('fs');
 const path = require('path');
+
 const writeFileAsync = promisify(fs.writeFile);
+const checkExistsAsync = promisify(fs.existsSync);
 
 
 import prettier from 'prettier';
@@ -31,7 +33,8 @@ export class jest {
     // or max recursion level reached
 
     if (!fs.existsSync(filePath) || filePath === '/' || maxDepth < 0){
-      return this.findEnvPath() ? this.findEnvPath() : componenthPath
+      console.log('exit condition reached')
+      return this.findEnvPath() ? this.findEnvPath() : componentPath
     }
 
     const gitFile = path.join(filePath, '.git')
@@ -40,20 +43,27 @@ export class jest {
     const configExists = fs.existsSync(configFile)
 
     if(configExists) {
-      console.log('jest config found', this)
+      console.log('jest config found')
       const configs = require(configFile)
 
       if(configs?.rootDir) {
         const jestLocation = path.join(filePath, configs?.rootDir)
-        if(fs.existsSync(jestLocation)) return jestLocation
+        
+        if(fs.existsSync(jestLocation)) {
+          console.log('jest location exists', jestLocation)
+          return jestLocation 
+        } else {
+          console.log(`jest rootDir location didn't exist`)
+          return this.findEnvPath() ? this.findEnvPath() : componentPath
+        }
       } else {
         
-        return this.findEnvPath() ? this.findEnvPath() : componenthPath
+        return this.findEnvPath() ? this.findEnvPath() : componentPath
       }
 
     } else if (gitExists){
       console.log("git file reached");
-      return this.findEnvPath() ? this.findEnvPath() : componenthPath
+      return this.findEnvPath() ? this.findEnvPath() : componentPath
 
     } else {
       this.findWritePath(path.dirname(filePath), maxDepth-1, componentPath)
@@ -81,7 +91,7 @@ export class jest {
         const componentPath = payload.componentInfo?.filename;
         componentMap[componentPath] = payload;
 
-        this.findWritePath(path.dirname(componentPath), 10, path.dirname(componentPath));
+        console.log('write path found: ', this.findWritePath(path.dirname(componentPath), 10, path.dirname(componentPath)))
         // if null is returned (no jest config and not default passed in via cli ), 
         // place test in origianl component folder
       }
