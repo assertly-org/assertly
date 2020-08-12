@@ -4,7 +4,9 @@
   "description": "Assertly API",
   "scripts": {
     "start": "npm run build && npm run serve",
+    "debug": "npm run build && npm run serve-debug",
     "build": "npm run tslint && npm run build-ts",
+    "serve-debug": "node --inspect dist/server.js",
     "serve": "node dist/server.js",
     "test": "jest --forceExit --coverage --verbose --detectOpenHandles",
     "watch-test": "npm run test -- --watchAll",

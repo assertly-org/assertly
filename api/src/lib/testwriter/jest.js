@@ -91,7 +91,9 @@ export class jest {
         const componentPath = payload.componentInfo?.filename;
         componentMap[componentPath] = payload;
 
-        console.log('write path found: ', this.findWritePath(path.dirname(componentPath), 10, path.dirname(componentPath)))
+        const writePath = this.findWritePath(path.dirname(componentPath), 10, path.dirname(componentPath));
+        console.log('between')
+        console.log('write path found: ', writePath, componentPath)
         // if null is returned (no jest config and not default passed in via cli ), 
         // place test in origianl component folder
       }
