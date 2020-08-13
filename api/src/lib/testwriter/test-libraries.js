@@ -23,6 +23,6 @@ export class testWriter {
   write(path) {
 
     return this._writeStrategy.write(path, this._tests);
-    // return this._writeStrategy.write(this._tests[0]?.writeTestLocation, this._tests);
+
   }
 }

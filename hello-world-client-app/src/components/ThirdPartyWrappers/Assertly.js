@@ -13,7 +13,6 @@ export default class Assertly extends Component {
 
     const useAssertly = true;
     const apiKey = "1a7e9a24-fc8d-4004-95d8-e7e9b8631bed";
-    const testLocation = "/Users/zealotsd/Repos/assertly/hello-world-client-app/tests/";
 
     const s = document.createElement("script");
     s.type = "text/javascript";
@@ -21,10 +20,10 @@ export default class Assertly extends Component {
 
     if (useAssertly) {
       s.innerHTML = `(function(w,d,s,l,i,t){w[l]=w[l]||[];w[l].push({'assertly.start':
-                new Date().getTime(),event:'assertly.js','apiKey':i,'testLocation':t});var f=d.getElementsByTagName(s)[0],
+                new Date().getTime(),event:'assertly.js','apiKey':i});var f=d.getElementsByTagName(s)[0],
                 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 '//localhost:${PORT}/api/assertly-client/assertly.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-              })(window,document,'script','dataLayer','${apiKey}','${testLocation}')`;
+              })(window,document,'script','dataLayer','${apiKey}')`;
       this.instance.appendChild(s);
     }
   }

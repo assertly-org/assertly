@@ -1,46 +1,54 @@
-const {promisify} = require('util');
+const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
 
 const writeFileAsync = promisify(fs.writeFile);
-const checkExistsAsync = promisify(fs.existsSync);
-
 
 import prettier from 'prettier';
 
 export class jest {
   constructor() {
-
     this._maxRecurse = 10;
-
-
   }
 
-  findEnvPath() {
+  async findEnvPath() {
     const environment_set_path = process.env.ASSERTLY_DIRECTORY
+    const exists = await this.checkFilePath(environment_set_path)
 
-    if (environment_set_path !== undefined && fs.existsSync(environment_set_path)) {
+    if (environment_set_path !== undefined && exists) {
       return environment_set_path
     } else {
       return null
     }
   }
 
-  findWritePath(filePath, maxDepth, componentPath) { 
+  async checkFilePath(filePath) {
+    try {
+      await fs.promises.access(filePath);
+      return true
+    } catch (error) {
+      return false
+    }
+  }
 
-    // exist recursion if directory does not exist 
+  async findWritePath(filePath, maxDepth, componentPath, envPath) {
+
+    // exit recursion if directory does not exist 
     // or root path is reached 
-    // or max recursion level reached
+    // or max recursion level reached\
 
-    if (!fs.existsSync(filePath) || filePath === '/' || maxDepth < 0){
+    console.log(`filepath: ${filePath}`)
+    const filePathExists = await this.checkFilePath(filePath)
+
+    if (!filePathExists || filePath === '/' || maxDepth < 0) {
       console.log('exit condition reached')
-      return this.findEnvPath() ? this.findEnvPath() : componentPath
+      return envPath ? envPath : componentPath
     }
 
     const gitFile = path.join(filePath, '.git')
     const configFile = path.join(filePath,'jest.config.js')
-    const gitExists = fs.existsSync(gitFile)
-    const configExists = fs.existsSync(configFile)
+    const gitExists = await this.checkFilePath(gitFile)
+    const configExists = await this.checkFilePath(configFile)
 
     if(configExists) {
       console.log('jest config found')
@@ -48,40 +56,40 @@ export class jest {
 
       if(configs?.rootDir) {
         const jestLocation = path.join(filePath, configs?.rootDir)
-        
-        if(fs.existsSync(jestLocation)) {
+        const jestLocationExists = await this.checkFilePath(jestLocation)
+        if(jestLocationExists) {
           console.log('jest location exists', jestLocation)
           return jestLocation 
         } else {
           console.log(`jest rootDir location didn't exist`)
-          return this.findEnvPath() ? this.findEnvPath() : componentPath
+          return envPath ? envPath : componentPath
         }
       } else {
-        
-        return this.findEnvPath() ? this.findEnvPath() : componentPath
+
+        return envPath ? envPath : componentPath
       }
 
     } else if (gitExists){
       console.log("git file reached");
-      return this.findEnvPath() ? this.findEnvPath() : componentPath
+      return envPath ? envPath : componentPath
 
     } else {
-      this.findWritePath(path.dirname(filePath), maxDepth-1, componentPath)
+      return await this.findWritePath(path.dirname(filePath), maxDepth-1, componentPath, envPath)
     }
-  
+
   }
 
-  async write(writeDir=null, input=null) {
+  async write(writeDir = null, input = null) {
     console.log(`writing jest test to ${writeDir} for input: \n`, input)
-    
+
     /*
      From a set of tests, get a unique list of components
      */
     let componentMap = {};
     let unitTests = [];
-
+    let foundPath = '';
+    const envPath = await this.findEnvPath();
     
-
 
     for (let actionCounter = 0; actionCounter < input.length; actionCounter++) {
       const payload = input[actionCounter];
@@ -91,17 +99,16 @@ export class jest {
         const componentPath = payload.componentInfo?.filename;
         componentMap[componentPath] = payload;
 
-        const writePath = this.findWritePath(path.dirname(componentPath), 10, path.dirname(componentPath));
-        console.log('between')
-        console.log('write path found: ', writePath, componentPath)
-        // if null is returned (no jest config and not default passed in via cli ), 
-        // place test in origianl component folder
+        
+        foundPath = await this.findWritePath(path.dirname(componentPath), this._maxRecurse, path.dirname(componentPath), envPath);
+        console.log('found path found: ', foundPath)
+
       }
     }
 
-    
 
-    
+
+
     for (const componentKey of Object.keys(componentMap)) {
       const component = componentMap[componentKey];
       let testOutput = '';
@@ -110,7 +117,7 @@ export class jest {
       testOutput += this.writeHead();
 
       // write the test for the component that caused the click, by mounting and clicking
-      if(component.clickHandlerComponent) {
+      if (component.clickHandlerComponent) {
 
         const clickComponentName = component.clickHandlerComponent?.componentName;
         const clickProps = component.clickHandlerComponent?.props;
@@ -125,17 +132,17 @@ export class jest {
         testOutput += this.writeOuterDescribe(clickComponentName);
         testOutput += this.writeSpy();
         testOutput += this.writeClickPropsAndShallowWrapper(clickProps, clickComponentName);
-        
+
         testOutput += this.basicClickTest();
         testOutput += this.basicRenderTest();
-  
+
         // close outer describe
         testOutput += this.closeBlock();
 
       }
 
       // write the tests for the component(s), do not include the component that caused the click; that test is included seperately
-      if(component.componentInfo?.componentName !== component.clickHandlerComponent?.componentName) {
+      if (component.componentInfo?.componentName !== component.clickHandlerComponent?.componentName) {
         // component specific things are now in component info key
         const componentName = component.componentInfo?.componentName;
         const props = component.componentInfo?.props;
@@ -156,36 +163,30 @@ export class jest {
 
       //************************************************************//
 
-      const prettyTestOutput = prettier.format(testOutput, {parser: 'babel'});
+      const prettyTestOutput = prettier.format(testOutput, { parser: 'babel' });
 
       console.log(prettyTestOutput)
       // save the test outputs for a return if the user is not writing to a file
       unitTests.push(prettyTestOutput)
 
       const fileName = this.getTestFileName(componentPath);
+      const writePath = path.join(foundPath,fileName)
 
-      const writePath = writeDir + fileName;
-
-      // write the pretty test output to the path only if a writeDir was passed in
-      if(writeDir) {
+      if (fs.existsSync(foundPath)) {
+        
+        // unlink the file in the specific directory if it already exists
         if (fs.existsSync(writePath)) {
           fs.unlinkSync(writePath);
         }
 
-        if (fs.existsSync(writeDir)) {
-          await writeFileAsync(writePath, prettyTestOutput);
-        } else {
-          console.log(`Specified write directory ${writeDir} does not eixst.`)
-          return
-        }
-       
+        // write the file
+        await writeFileAsync(writePath, prettyTestOutput);
+      } else {
+        console.log(`Specified write directory ${foundPath} does not eixst.`)
+        return unitTests;
       }
     }
 
-    if (!writeDir) {
-      // if there is no write directory return the componentMap, which has the Jest unit tests attached to it
-      return unitTests;
-    }
   }
 
   writeHead() {
@@ -264,7 +265,7 @@ export class jest {
   }
 
   writePropsAndShallowWrapper(props, componentName) {
-    
+
     return `
       ${this.writeProps(props)}
       
@@ -273,7 +274,7 @@ export class jest {
   }
 
   writeClickPropsAndShallowWrapper(props, componentName) {
-    
+
     return `
       ${this.writeClickProps(props)}
       
@@ -287,7 +288,7 @@ export class jest {
     `;
   }
 
-  writeHandlerObject(clickHandler) {    
+  writeHandlerObject(clickHandler) {
     return `
       ${this.writeOpenHandler()}
       ${this.writeClickFunction(clickHandler)}
