@@ -1,5 +1,5 @@
-import CounterCard from "/Users/zealotsd/Repos/assertly/hello-world-client-app/src/components/CounterCard/CounterCard.js";
-import WrapperButton from "/Users/zealotsd/Repos/assertly/hello-world-client-app/src/components/CounterCard/WrapperButton.js";
+import CounterCard from "../hello-world-client-app/src/components/CounterCard/CounterCard.js";
+import WrapperButton from "../hello-world-client-app/src/components/CounterCard/WrapperButton.js";
 import React from "react";
 import { configure, shallow } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";

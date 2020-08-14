@@ -12,13 +12,16 @@ export class jest {
   }
 
   findRelativePath(foundPath, componentPath, depth) {
+    // escape hatch
+    if (depth > this._maxRecurse) return
+
     if (componentPath.includes(foundPath) ) {
-      console.log("original: ", foundPath, depth)
-      console.log("stripped: ", componentPath.replace(foundPath, '../'.repeat(depth)))
-      return
+      // console.log("original: ", foundPath, depth)
+      // console.log("stripped: ", componentPath.replace(foundPath, '../'.repeat(depth)))
+      return componentPath.replace(foundPath, '../'.repeat(depth))
     } else {
-      console.log(foundPath.replace(/[^\/]*\/$/, ""))
-      this.findRelativePath(foundPath.replace(/[^\/]*\/$/, ""), componentPath, depth+1)
+      // console.log(foundPath.replace(/[^\/]*\/$/, ""))
+      return this.findRelativePath(foundPath.replace(/[^\/]*\/$/, ""), componentPath, depth+1)
     }
   }
 
@@ -135,11 +138,11 @@ export class jest {
         const clickComponentName = component.clickHandlerComponent?.componentName;
         const clickProps = component.clickHandlerComponent?.props;
         const clickComponentPath = component.clickHandlerComponent?.filename;
+        const clickRelativePath = this.findRelativePath(foundPath, clickComponentPath, 0);
         const clickHandler = '{return true}'
 
-        // console.log(`found path: ${foundPath} \ncomponentPath: ${clickComponentPath}`);
-        this.findRelativePath(foundPath, componentPath, 0)
-        componentImport = `import ${clickComponentName} from '${clickComponentPath}';`;
+
+        componentImport = `import ${clickComponentName} from '${clickRelativePath}';`;
         testOutput = componentImport + testOutput;
 
         testOutput += this.writeHandlerObject(clickHandler)
@@ -162,9 +165,9 @@ export class jest {
         const componentName = component.componentInfo?.componentName;
         const props = component.componentInfo?.props;
         const componentPath = componentKey;
-        // 
-        // console.log(`found path: ${foundPath} \ncomponentPath: ${componentPath}`)
-        componentImport = `import ${componentName} from '${componentPath}';`;
+        const relativePath = this.findRelativePath(foundPath, componentPath, 0);
+
+        componentImport = `import ${componentName} from '${relativePath}';`;
         testOutput = componentImport + testOutput;
 
         testOutput += this.writeOuterDescribe(componentName);
