@@ -11,6 +11,17 @@ export class jest {
     this._maxRecurse = 10;
   }
 
+  findRelativePath(foundPath, componentPath, depth) {
+    if (componentPath.includes(foundPath) ) {
+      console.log("original: ", foundPath, depth)
+      console.log("stripped: ", componentPath.replace(foundPath, '../'.repeat(depth)))
+      return
+    } else {
+      console.log(foundPath.replace(/[^\/]*\/$/, ""))
+      this.findRelativePath(foundPath.replace(/[^\/]*\/$/, ""), componentPath, depth+1)
+    }
+  }
+
   async findEnvPath() {
     const environment_set_path = process.env.ASSERTLY_DIRECTORY
     const exists = await this.checkFilePath(environment_set_path)
@@ -37,11 +48,11 @@ export class jest {
     // or root path is reached 
     // or max recursion level reached\
 
-    console.log(`filepath: ${filePath}`)
+    // console.log(`filepath: ${filePath}`)
     const filePathExists = await this.checkFilePath(filePath)
 
     if (!filePathExists || filePath === '/' || maxDepth < 0) {
-      console.log('exit condition reached')
+      // console.log('exit condition reached')
       return envPath ? envPath : componentPath
     }
 
@@ -51,17 +62,17 @@ export class jest {
     const configExists = await this.checkFilePath(configFile)
 
     if(configExists) {
-      console.log('jest config found')
+      // console.log('jest config found')
       const configs = require(configFile)
 
       if(configs?.rootDir) {
         const jestLocation = path.join(filePath, configs?.rootDir)
         const jestLocationExists = await this.checkFilePath(jestLocation)
         if(jestLocationExists) {
-          console.log('jest location exists', jestLocation)
+          // console.log('jest location exists', jestLocation)
           return jestLocation 
         } else {
-          console.log(`jest rootDir location didn't exist`)
+          // console.log(`jest rootDir location didn't exist`)
           return envPath ? envPath : componentPath
         }
       } else {
@@ -70,7 +81,7 @@ export class jest {
       }
 
     } else if (gitExists){
-      console.log("git file reached");
+      // console.log("git file reached");
       return envPath ? envPath : componentPath
 
     } else {
@@ -101,6 +112,8 @@ export class jest {
 
         
         foundPath = await this.findWritePath(path.dirname(componentPath), this._maxRecurse, path.dirname(componentPath), envPath);
+        if (foundPath.slice(-1) !== '/') foundPath = foundPath.concat('/') 
+
         console.log('found path found: ', foundPath)
 
       }
@@ -124,6 +137,8 @@ export class jest {
         const clickComponentPath = component.clickHandlerComponent?.filename;
         const clickHandler = '{return true}'
 
+        // console.log(`found path: ${foundPath} \ncomponentPath: ${clickComponentPath}`);
+        this.findRelativePath(foundPath, componentPath, 0)
         componentImport = `import ${clickComponentName} from '${clickComponentPath}';`;
         testOutput = componentImport + testOutput;
 
@@ -148,6 +163,7 @@ export class jest {
         const props = component.componentInfo?.props;
         const componentPath = componentKey;
         // 
+        // console.log(`found path: ${foundPath} \ncomponentPath: ${componentPath}`)
         componentImport = `import ${componentName} from '${componentPath}';`;
         testOutput = componentImport + testOutput;
 
