@@ -72,6 +72,7 @@ export default class AssertlyClient implements ClientInterface {
     menuDiv.style.zIndex = '5';
 
     message?.componentInfo?.map((val: any) => {
+      console.log("button val: ", val);
       const btn = document.createElement("BUTTON");
       btn.style.width = '150px';
       btn.innerHTML = val?.componentName;

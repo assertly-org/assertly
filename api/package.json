@@ -13,7 +13,7 @@
     "build-ts": "tsc && cg",
     "watch-ts": "tsc -w",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
-    "prettier": "prettier --write"
+    "prettier": "prettier --write src/**/*.js"
   },
   "dependencies": {
     "@babel/preset-env": "^7.10.4",
