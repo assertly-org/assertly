@@ -11,33 +11,13 @@ export class jest {
     this._maxRecurse = 10;
   }
 
-  // findRelativePath(foundPath, componentPath, depth) {
-  //   // escape hatch
-  //   if (depth > this._maxRecurse) return;
-
-  //   if (componentPath.includes(foundPath)) {
-  //     // console.log("original: ", foundPath, depth)
-  //     // console.log("stripped: ", componentPath.replace(foundPath, '../'.repeat(depth)))
-  //     return componentPath.replace(foundPath, "../".repeat(depth));
-  //   } else {
-  //     // console.log(foundPath.replace(/[^\/]*\/$/, ""))
-  //     return this.findRelativePath(
-  //       foundPath.replace(/[^\/]*\/$/, ""),
-  //       componentPath,
-  //       depth + 1
-  //     );
-  //   }
-  // }
-
   async findEnvPath(componentDir) {
     const environment_set_path = process.env.ASSERTLY_DIRECTORY;
     let combined_path = null;
-    console.log(environment_set_path, componentDir);
+    // console.log(environment_set_path, componentDir);
     if(path.isAbsolute(environment_set_path)) {
-      console.log('absolute')
       combined_path = environment_set_path
     } else {
-      console.log('relative')
       combined_path = path.join(componentDir, environment_set_path)
     }
     const exists = await this.checkFilePath(combined_path);
@@ -61,9 +41,10 @@ export class jest {
   async findWritePath(filePath, maxDepth, componentPath) {
     // exit recursion if directory does not exist
     // or root path is reached
-    // or max recursion level reached\
+    // or max recursion level reached
 
-    // console.log(`filepath: ${filePath}`)
+    // the ENV variable is checked before this method is run, if the ENV variable
+    // points to a valid location, the envPath is used and this method is never invoked
     const filePathExists = await this.checkFilePath(filePath);
 
     if (!filePathExists || filePath === "/" || maxDepth < 0) {
@@ -76,26 +57,26 @@ export class jest {
     const gitExists = await this.checkFilePath(gitFile);
     const configExists = await this.checkFilePath(configFile);
 
+    // check for the existence of the jest config file
     if (configExists) {
-      // console.log('jest config found')
       const configs = require(configFile);
 
+      // if it does exist, check if it has the rootDir key
       if (configs?.rootDir) {
         const jestLocation = path.join(filePath, configs?.rootDir);
         const jestLocationExists = await this.checkFilePath(jestLocation);
         if (jestLocationExists) {
-          // console.log('jest location exists', jestLocation)
           return jestLocation;
         } else {
-          // console.log(`jest rootDir location didn't exist`)
           return componentPath;
         }
       } else {
         return componentPath;
       }
+    // check if the git file is reached
     } else if (gitExists) {
-      // console.log("git file reached");
       return componentPath;
+    // recurse up the tree
     } else {
       return await this.findWritePath(
         path.dirname(filePath),
