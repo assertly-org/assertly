@@ -14,15 +14,19 @@ export class jest {
   async findEnvPath(componentDir) {
     const environment_set_path = process.env.ASSERTLY_DIRECTORY;
     let combined_path = null;
-    // console.log(environment_set_path, componentDir);
-    if(path.isAbsolute(environment_set_path)) {
+    
+
+    if(!environment_set_path) {
+      combined_path = componentDir
+    } else if(path.isAbsolute(environment_set_path)) {
       combined_path = environment_set_path
     } else {
       combined_path = path.join(componentDir, environment_set_path)
     }
+    // console.log(environment_set_path, componentDir, combined_path);
     const exists = await this.checkFilePath(combined_path);
 
-    if (environment_set_path !== undefined && exists) {
+    if (exists) {
       return combined_path;
     } else {
       return null;
@@ -59,6 +63,7 @@ export class jest {
 
     // check for the existence of the jest config file
     if (configExists) {
+      // console.log('found jest config', filePath)
       const configs = require(configFile);
 
       // if it does exist, check if it has the rootDir key
@@ -75,6 +80,7 @@ export class jest {
       }
     // check if the git file is reached
     } else if (gitExists) {
+      // console.log('found git file', filePath)
       return componentPath;
     // recurse up the tree
     } else {
@@ -118,7 +124,7 @@ export class jest {
         }
         if (foundPath.slice(-1) !== "/") foundPath = foundPath.concat("/");
 
-        console.log("found path found: ", envPath, foundPath);
+        // console.log("found path found: ", envPath, foundPath);
       }
     }
 
