@@ -19,7 +19,10 @@ export function getComponentInfo(component: any, maxNest: number, resultArray: a
       // the line number is really for the next component down in the tree that is being called from the 'filename'
       linenumber: component?._debugSource?.lineNumber, 
       props: props, 
-      componentName: name})
+      // if it's component  str.split('\\').pop.split(`/`).pop().split('.')[0]
+      componentName: name === 'Component' ? 
+        component?._debugSource?.fileName?.split('\\').pop().split(`/`).pop().split('.')[0] : name
+    })
     return getComponentInfo(component?._debugOwner,maxNest-1,resultArray)
   } else {
     return getComponentInfo(component?._debugOwner,maxNest-1,resultArray)
