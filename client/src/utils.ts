@@ -1,9 +1,7 @@
 import Coordinates from "./types/Coordinates";
 
 export function getComponentInfo(component: any, maxNest: number, resultArray: any): any {
-  
-
-  // console.log('findFileName: ', component)
+  console.log('getComponentInfo: ', component)
 
   if (!component || maxNest === 0) {
     // console.log('resultArray: ', resultArray)
