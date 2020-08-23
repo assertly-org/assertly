@@ -13,7 +13,6 @@ const Hoc = (params) => {
 };
 
 function getDisplayName(WrappedComponent) {
-  console.log('WrappedComponent', WrappedComponent.name, WrappedComponent.displayName);
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 }
 
