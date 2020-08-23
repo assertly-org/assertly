@@ -1,5 +1,9 @@
 import React from "react";
 
-export default function(props) {
+const Input = function(props) {
   return <input {...props} />;
 }
+
+Input.displayName = 'Input';
+
+export default Input;
