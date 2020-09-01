@@ -2,7 +2,7 @@
   "name": "@assertly-org/assertly-oss",
   "version": "1.0.3",
   "description": "Testing Tool",
-  "main": "index.js",
+  "main": "api/dist/server.js",
   "directories": {
     "doc": "docs"
   },
@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/assertly-org/assertly/issues"
   },
-  "homepage": "https://github.com/assertly-org/assertly#readme"
+  "homepage": "https://github.com/assertly-org/assertly#readme",
+  "bin": {
+    "assertly": "bin/assertly"
+  }  
 }
