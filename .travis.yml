@@ -3,7 +3,8 @@ node_js:
 - 10
 before_install:
 - cd api
-install: npm install
+install: 
+- npm install
 - npm run build
 before_deploy:
 - cd ../
