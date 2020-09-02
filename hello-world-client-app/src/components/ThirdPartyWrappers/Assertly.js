@@ -8,7 +8,7 @@ export default class Assertly extends Component {
     if (process.env.ASSERTLY_PORT !== undefined) {
       PORT = parseInt(process.env.ASSERTLY_PORT);
     } else {
-      PORT = 3002;
+      PORT = 3020;
     }
 
     const useAssertly = true;

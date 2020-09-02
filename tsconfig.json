@@ -7,10 +7,10 @@
     "noImplicitAny": true,
     "moduleResolution": "node",
     "sourceMap": true,
-    "outDir": "dist",
-    "baseUrl": "./",
+    "outDir": "api/dist",
+    "baseUrl": "./api",
     "experimentalDecorators": true,
-    "rootDir": "./src",
+    "rootDir": "./api/src",
     "emitDecoratorMetadata": true,
     "lib": [
       "es6",
@@ -18,13 +18,13 @@
     ],
     "paths": {
       "*": [
-        "../node_modules/*",
-        "src/types/*"
+        "node_modules/*",
+        "api/src/types/*"
       ]
     }
   },
   "include": [
-    "src/**/*"
+    "api/src/**/*"
   ],
   "types" : [
     "node"

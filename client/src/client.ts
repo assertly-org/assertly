@@ -237,7 +237,7 @@ export default class AssertlyClient implements ClientInterface {
     // const accountId = window["dataLayer"][0]["apiKey"];
     const accountId = (window as { [key: string]: any })["dataLayer"][0]["apiKey"]
     // const writeLocation = (window as { [key: string]: any })["dataLayer"][0]["testLocation"]
-    const url = `//localhost:3002/api/accounts/${accountId}/events/`;
+    const url = `//localhost:3020/api/accounts/${accountId}/events/`;
     // console.log('this is the write location: ', writeLocation, accountId);
     // console.log('this is the message in SEND_EVENT: ', message)
 

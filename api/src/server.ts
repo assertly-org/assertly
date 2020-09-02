@@ -7,7 +7,7 @@ if (process.env.ASSERTLY_PORT !== undefined) {
 } else if (process.env.PORT !== undefined) {
   PORT = parseInt(process.env.PORT);
 } else {
-  PORT = 3002;
+  PORT = 3020;
 }
 
 // console.log('process env: ', process.env);
