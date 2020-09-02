@@ -4,6 +4,7 @@ node_js:
 before_install:
 - cd api
 install: npm install
+- npm run build
 before_deploy:
 - cd ../
 deploy:

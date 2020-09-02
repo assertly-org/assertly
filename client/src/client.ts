@@ -193,7 +193,7 @@ export default class AssertlyClient implements ClientInterface {
 
       const reactComponent = findReactElement(event.target);
       const msg: Message = this.getMessage(reactComponent, event);
-      // console.log('reactComponent and message in RECORD_EVENT: ', reactComponent, msg)
+      console.log('reactComponent and message in RECORD_EVENT: ', reactComponent, msg);
 
       localStorage.setItem("lastEvent", JSON.stringify(msg));
       this.previousMsg = msg;

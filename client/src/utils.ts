@@ -1,7 +1,7 @@
 import Coordinates from "./types/Coordinates";
 
 export function getComponentInfo(component: any, maxNest: number, resultArray: any): any {
-  console.log('getComponentInfo: ', component)
+  console.log('getComponentInfo: ', component, resultArray)
 
   if (!component || maxNest === 0) {
     // console.log('resultArray: ', resultArray)
@@ -87,7 +87,7 @@ export function getCoordinates(event: Event): Coordinates | null {
 }
 
 // map react classes to dom elements
-export function findReactElement(target: EventTarget): any {
+export function findReactElementDURKA(target: EventTarget): any {
   // console.dir(target)
   const key = Object.keys(target).find((key) =>
     key.startsWith("__reactInternalInstance$")
@@ -115,6 +115,26 @@ export function findReactElement(target: EventTarget): any {
   // }
   // return null;
 }
+
+export function findReactElement(target: EventTarget): any {
+  // const key = Object.keys(target).find((key) =>
+  //   key.startsWith("__reactInternalInstance$")
+  // );
+  const targetMap = target as { [key: string]: any };
+  // const internalInstance = key ? targetMap[key] : null;
+  // if (internalInstance == null) return null;
+  // return internalInstance._debugOwner
+  //   ? internalInstance._debugOwner.stateNode
+  //   : internalInstance.return.stateNode;
+  for (let key in targetMap) {
+    if (key.startsWith("__reactInternalInstance$")) {
+      // console.log('keys in the find ReactElement', target[key])
+      return targetMap[key];
+    }
+  }
+  return null;
+}
+
 
 export function functionStringify(obj: any): void {
   for (let k in obj) {
