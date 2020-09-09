@@ -92,8 +92,9 @@ export class jest {
     }
   }
 
+  // writeDir is not used in the current build, the findWritePathMethod uses a hueristic to find the relative write path
+  // based on whether an environmental variable exists or a jest config exists
   async write(writeDir = null, input = null) {
-    console.log(`writing jest test to ${writeDir} for input: \n`, input);
 
     /*
      From a set of tests, get a unique list of components
@@ -172,7 +173,10 @@ export class jest {
         const componentName = component.componentInfo?.componentName;
         const props = component.componentInfo?.props;
         const componentPath = componentKey;
-        const relativePath = path.relative(foundPath, componentPath);
+        
+        // grab only the relative filepath with filename but no extension
+        let relativePath = path.relative(foundPath, componentPath);
+        relativePath = path.join(path.parse(relativePath).dir,path.parse(relativePath).name)
 
         componentImport = `import ${componentName} from '${relativePath}';`;
         testOutput = componentImport + testOutput;

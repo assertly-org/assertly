@@ -17,7 +17,7 @@ export class testWriter {
   }
 
   // write is a method of the testWriter class
-  write(path) {
+  write(path=null) {
     return this._writeStrategy.write(path, this._tests);
   }
 }
