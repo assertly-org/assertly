@@ -12,7 +12,8 @@ import ClientInterface from "./types/Client";
 import Message from "./types/Message";
 import { EventType } from "./types/EventType";
 
-interface Component { }
+interface Component {
+}
 
 export default class AssertlyClient implements ClientInterface {
   eventsToRecord: EventType[] = ["click", "change"];
@@ -46,7 +47,7 @@ export default class AssertlyClient implements ClientInterface {
     const reactComponent = event.target ? findReactElement(event.target) : null;
     if (reactComponent !== this.previousComponent) {
       this.componentEventCache.forEach((msg) => {
-        console.log('in the reconcile')
+        console.log('in the reconcile');
         this.sendEvent(msg);
       });
       this.clearEventCache();
@@ -55,13 +56,13 @@ export default class AssertlyClient implements ClientInterface {
 
   createPopupMenu = (message: Message) => {
 
-    const eventTime = new Date().getTime()
-    const divID = "componentMenu" + eventTime
+    const eventTime = new Date().getTime();
+    const divID = "componentMenu" + eventTime;
     const mouseEvent = event as MouseEvent;
     const menuDiv = document.createElement("DIV");
 
     const previousMenus = Array.from(document.getElementsByClassName('componentMenu'));
-    previousMenus?.map((val: any) => val.remove())
+    previousMenus?.map((val: any) => val.remove());
 
     menuDiv.setAttribute("id", divID);
     menuDiv.setAttribute("class", 'componentMenu');
@@ -69,7 +70,9 @@ export default class AssertlyClient implements ClientInterface {
     menuDiv.style.position = "absolute";
     menuDiv.style.left = mouseEvent.x + 'px';
     menuDiv.style.top = mouseEvent.y + 'px';
-    menuDiv.style.zIndex = '5';
+
+    // needs to go on top of any other existing modal
+    menuDiv.style.zIndex = '9999999999999';
 
     message?.componentInfo?.map((val: any) => {
       console.log("button val: ", val);
@@ -77,24 +80,24 @@ export default class AssertlyClient implements ClientInterface {
       btn.style.width = '150px';
       btn.innerHTML = val?.componentName;
       if (btn.innerHTML) {
-        btn.addEventListener('click', () => this.componentMenuClick(event, divID, message))
+        btn.addEventListener('click', () => this.componentMenuClick(event, divID, message));
         menuDiv.appendChild(btn);
         const br = document.createElement("br");
         menuDiv.appendChild(br);
       }
-    })
+    });
 
     const CancelBtn = document.createElement("BUTTON");
     CancelBtn.style.width = '150px';
     CancelBtn.innerHTML = 'Cancel';
-    CancelBtn.addEventListener('click', () => this.removeSingleMenu(divID))
+    CancelBtn.addEventListener('click', () => this.removeSingleMenu(divID));
     menuDiv.appendChild(CancelBtn);
-  }
+  };
 
   removeSingleMenu = (divID: any) => {
     const menuDiv = document.getElementById(divID);
-    menuDiv?.remove()
-  }
+    menuDiv?.remove();
+  };
 
   componentMenuClick = (event: any, divID: any, message: Message): any => {
     // console.log('this is the click call back: ', event)
@@ -102,41 +105,45 @@ export default class AssertlyClient implements ClientInterface {
     const selectedComponent = message.componentInfo?.reduce(
       (acc: any, curr: any) => {
         if (curr.componentName === event.target?.innerHTML) {
-          return { ...curr }
-        } else { return acc }
-      }, null)
+          return {...curr};
+        } else {
+          return acc;
+        }
+      }, null);
 
-    event?.stopPropagation()
+    event?.stopPropagation();
     this.sendEvent({
       ...message,
       // there should only be one match here on the filter
       // componentInfo: message.componentInfo?.filter( (val:any) => val.componentName === event.target?.innerHTML)
       componentInfo: selectedComponent
-    })
+    });
 
-    this.removeSingleMenu(divID)
+    this.removeSingleMenu(divID);
     // const menuDiv = document.getElementById(divID);
     // menuDiv?.remove()
 
-  }
+  };
 
   getMessage = (reactComponent: any, event: KeyboardEvent | Event): Message => {
 
     // function to use in array reduce
     const findClickHandler = (accumulator: any, currentValue: any) => {
       if (currentValue.props?.onClick) {
-        return {...currentValue}
-      } else { return accumulator }
+        return {...currentValue};
+      } else {
+        return accumulator;
+      }
     };
 
     const target = event.target || event.srcElement;
     const inputTarget = target as HTMLInputElement;
     const linkTarget = target as HTMLLinkElement;
 
-    const componentInfo = getComponentInfo(reactComponent, 10, [])
+    const componentInfo = getComponentInfo(reactComponent, 10, []);
 
     // find the closest click handler that would have been triggered
-    const clickHandler = componentInfo?.slice(0)?.reverse()?.reduce(findClickHandler, null)
+    const clickHandler = componentInfo?.slice(0)?.reverse()?.reduce(findClickHandler, null);
 
 
     // console.log('component info in GET_MESSAGE: ', componentInfo, clickHandler)
@@ -163,9 +170,8 @@ export default class AssertlyClient implements ClientInterface {
 
     };
 
-    return message
+    return message;
   };
-
 
 
   recordEvent = (event: Event) => {
@@ -234,15 +240,14 @@ export default class AssertlyClient implements ClientInterface {
   };
 
   sendEvent = async (message: Message) => {
-    // const accountId = window["dataLayer"][0]["apiKey"];
-    const accountId = (window as { [key: string]: any })["dataLayer"][0]["apiKey"]
-    // const writeLocation = (window as { [key: string]: any })["dataLayer"][0]["testLocation"]
+    let accountId = (window as { [key: string]: any })["dataLayer"][0]["apiKey"];
+
+    // rather get a 403 than a bad route
+    if (!accountId) {
+      accountId = 1;
+    }
+
     const url = `//localhost:3020/api/accounts/${accountId}/events/`;
-    // console.log('this is the write location: ', writeLocation, accountId);
-    // console.log('this is the message in SEND_EVENT: ', message)
-
-    // message.writeTestLocation = writeLocation
-
 
     await fetch(url, {
       method: "POST",
