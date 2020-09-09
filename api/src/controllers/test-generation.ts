@@ -30,9 +30,9 @@ export default class TestGeneration extends ControllerBase {
 
       event.forEach(event => readPromises.push(reconcileWithAst(event)));
       const reconciledEvents = await Promise.all(readPromises);
-      console.log('reconciled event', reconciledEvents);
+      // console.log('reconciled event', reconciledEvents);
 
-      const jestTestWriter = new testWriter('jest', event);
+      const jestTestWriter = new testWriter('jest', reconciledEvents);
       let unitTests: any;
 
       unitTests = jestTestWriter.write();
