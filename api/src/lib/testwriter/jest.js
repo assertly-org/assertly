@@ -172,13 +172,17 @@ export class jest {
         // component specific things are now in component info key
         const componentName = component.componentInfo?.componentName;
         const props = component.componentInfo?.props;
+        const isDefaultExport = component.componentInfo?.isDefaultExport;
         const componentPath = componentKey;
         
         // grab only the relative filepath with filename but no extension
         let relativePath = path.relative(foundPath, componentPath);
         relativePath = path.join(path.parse(relativePath).dir,path.parse(relativePath).name)
 
-        componentImport = `import ${componentName} from '${relativePath}';`;
+        // add curly parens if it is not the default export
+        isDefaultExport ? componentImport = `import ${componentName} from '${relativePath}';` : 
+          componentImport = `import {${componentName}} from '${relativePath}';`;
+
         testOutput = componentImport + testOutput;
 
         testOutput += this.writeOuterDescribe(componentName);

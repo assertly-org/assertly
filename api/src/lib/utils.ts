@@ -48,10 +48,15 @@ export async function createAst(filename: string) {
 
 export async function reconcileWithAst(event: any) {
 
-  const fileAst: any = await createAst(event?.filename);
-  const astComponentName = findComponentName(fileAst, event?.linenumber);
-
-  return {...event, astComponentName: astComponentName};
+  const fileAst: any = await createAst(event?.componentInfo?.filename);
+  // const astComponentName = findComponentName(fileAst, event?.componentInfo?.linenumber);
+  const astComponentName = '';
+  const isDefaultExport = findIsDefaultExport(fileAst);
+  return {...event,
+          componentInfo: {
+            ...event.componentInfo,
+            astComponentName: astComponentName,
+            isDefaultExport: isDefaultExport}};
 }
 
 export function findComponentName(ast: any, lineNumber: number): string {
@@ -63,4 +68,15 @@ export function findComponentName(ast: any, lineNumber: number): string {
     if (ast.tokens[i].loc.start.line === lineNumber) break;
   }
   return astName;
+}
+
+export function findIsDefaultExport(ast: any): boolean {
+
+  for (let i = 1; i < ast?.tokens?.length; i++) {
+    if (ast.tokens[i ].value === 'default' && ast.tokens[i - 1].value === 'export') {
+      return true;
+    }
+  }
+
+  return false;
 }
