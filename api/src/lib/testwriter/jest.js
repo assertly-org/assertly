@@ -170,7 +170,7 @@ export class jest {
         component.clickHandlerComponent?.componentName
       ) {
         // component specific things are now in component info key
-        // console.log('in the jest testWriter ', component)
+        console.log('in the jest testWriter ', component)
         const componentName = component.componentInfo?.componentName;
         const props = component.componentInfo?.props;
         const isDefaultExport = component.componentInfo?.isDefaultExport;
