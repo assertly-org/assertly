@@ -48,15 +48,22 @@ export async function createAst(filename: string) {
 
 export async function reconcileWithAst(event: any) {
 
-  const fileAst: any = await createAst(event?.componentInfo?.filename);
-  // const astComponentName = findComponentName(fileAst, event?.componentInfo?.linenumber);
-  const astComponentName = '';
-  const isDefaultExport = findIsDefaultExport(fileAst);
-  return {...event,
-          componentInfo: {
-            ...event.componentInfo,
-            astComponentName: astComponentName,
-            isDefaultExport: isDefaultExport}};
+  let fileAst: any;
+  let isDefaultExport: boolean;
+
+  if (event?.componentInfo?.filename) {
+    fileAst = await createAst(event?.componentInfo?.filename);
+    isDefaultExport = findIsDefaultExport(fileAst);
+    event.componentInfo.isDefaultExport = isDefaultExport;
+  }
+
+  if (event?.clickHandlerComponent?.filename) {
+    fileAst = await createAst(event?.clickHandlerComponent?.filename);
+    isDefaultExport = findIsDefaultExport(fileAst);
+    event.clickHandlerComponent.isDefaultExport = isDefaultExport;
+  }
+
+  return event;
 }
 
 export function findComponentName(ast: any, lineNumber: number): string {

@@ -1,4 +1,4 @@
-import CounterCard from "CounterCard";
+import CounterCard from "./CounterCard";
 import React from "react";
 import { configure, shallow } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
@@ -14,7 +14,7 @@ describe("CounterCard", () => {
         search: "",
         hash: "",
         state: null,
-        key: "yhgpqz",
+        key: "616cze",
       },
     },
     location: {
@@ -22,7 +22,7 @@ describe("CounterCard", () => {
       search: "",
       hash: "",
       state: null,
-      key: "yhgpqz",
+      key: "616cze",
     },
     match: {
       path: "/countercard",

@@ -134,18 +134,28 @@ export class jest {
       let testOutput = "";
       let componentImport = "";
 
+      super.testme();
+      console.log('Event: \n', component)
+
       testOutput += this.writeHead();
 
       // write the test for the component that caused the click, by mounting and clicking
       if (component.clickHandlerComponent) {
+        
         const clickComponentName =
           component.clickHandlerComponent?.componentName;
         const clickProps = component.clickHandlerComponent?.props;
         const clickComponentPath = component.clickHandlerComponent?.filename;
-        const clickRelativePath = path.relative(foundPath, clickComponentPath) 
         const clickHandler = "{return true}";
+        const isDefaultExport = component.componentInfo?.isDefaultExport;
 
-        componentImport = `import ${clickComponentName} from '${clickRelativePath}';`;
+        let clickRelativePath = path.relative(foundPath, clickComponentPath) 
+        clickRelativePath = path.join(path.parse(clickRelativePath).dir,path.parse(clickRelativePath).name)
+        if (!clickRelativePath.includes('/'))  clickRelativePath = "./" + clickRelativePath
+
+        isDefaultExport ? componentImport = `import ${clickComponentName} from '${clickRelativePath}';` : 
+        componentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
+
         testOutput = componentImport + testOutput;
 
         testOutput += this.writeHandlerObject(clickHandler);
@@ -170,7 +180,6 @@ export class jest {
         component.clickHandlerComponent?.componentName
       ) {
         // component specific things are now in component info key
-        console.log('in the jest testWriter ', component)
         const componentName = component.componentInfo?.componentName;
         const props = component.componentInfo?.props;
         const isDefaultExport = component.componentInfo?.isDefaultExport;
@@ -179,6 +188,8 @@ export class jest {
         // grab only the relative filepath with filename but no extension
         let relativePath = path.relative(foundPath, componentPath);
         relativePath = path.join(path.parse(relativePath).dir,path.parse(relativePath).name)
+
+        if (!relativePath.includes('/'))  relativePath = "./" + relativePath
 
         // add curly parens if it is not the default export
         isDefaultExport ? componentImport = `import ${componentName} from '${relativePath}';` : 
