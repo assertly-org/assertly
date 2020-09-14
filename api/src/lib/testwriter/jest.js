@@ -1,4 +1,4 @@
-const { promisify } = require("util");
+const {promisify} = require("util");
 const fs = require("fs");
 const path = require("path");
 
@@ -14,11 +14,11 @@ export class jest {
   async findEnvPath(componentDir) {
     const environment_set_path = process.env.ASSERTLY_DIRECTORY;
     let combined_path = null;
-    
 
-    if(!environment_set_path) {
+
+    if (!environment_set_path) {
       combined_path = componentDir
-    } else if(path.isAbsolute(environment_set_path)) {
+    } else if (path.isAbsolute(environment_set_path)) {
       combined_path = environment_set_path
     } else {
       combined_path = path.join(componentDir, environment_set_path)
@@ -78,11 +78,11 @@ export class jest {
       } else {
         return componentPath;
       }
-    // check if the git file is reached
+      // check if the git file is reached
     } else if (gitExists) {
       // console.log('found git file', filePath)
       return componentPath;
-    // recurse up the tree
+      // recurse up the tree
     } else {
       return await this.findWritePath(
         path.dirname(filePath),
@@ -134,14 +134,13 @@ export class jest {
       let testOutput = "";
       let componentImport = "";
 
-      super.testme();
       console.log('Event: \n', component)
 
       testOutput += this.writeHead();
 
       // write the test for the component that caused the click, by mounting and clicking
       if (component.clickHandlerComponent) {
-        
+
         const clickComponentName =
           component.clickHandlerComponent?.componentName;
         const clickProps = component.clickHandlerComponent?.props;
@@ -149,12 +148,12 @@ export class jest {
         const clickHandler = "{return true}";
         const isDefaultExport = component.componentInfo?.isDefaultExport;
 
-        let clickRelativePath = path.relative(foundPath, clickComponentPath) 
-        clickRelativePath = path.join(path.parse(clickRelativePath).dir,path.parse(clickRelativePath).name)
-        if (!clickRelativePath.includes('/'))  clickRelativePath = "./" + clickRelativePath
+        let clickRelativePath = path.relative(foundPath, clickComponentPath)
+        clickRelativePath = path.join(path.parse(clickRelativePath).dir, path.parse(clickRelativePath).name)
+        if (!clickRelativePath.includes('/')) clickRelativePath = "./" + clickRelativePath
 
-        isDefaultExport ? componentImport = `import ${clickComponentName} from '${clickRelativePath}';` : 
-        componentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
+        isDefaultExport ? componentImport = `import ${clickComponentName} from '${clickRelativePath}';` :
+          componentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
 
         testOutput = componentImport + testOutput;
 
@@ -184,15 +183,15 @@ export class jest {
         const props = component.componentInfo?.props;
         const isDefaultExport = component.componentInfo?.isDefaultExport;
         const componentPath = componentKey;
-        
+
         // grab only the relative filepath with filename but no extension
         let relativePath = path.relative(foundPath, componentPath);
-        relativePath = path.join(path.parse(relativePath).dir,path.parse(relativePath).name)
+        relativePath = path.join(path.parse(relativePath).dir, path.parse(relativePath).name)
 
-        if (!relativePath.includes('/'))  relativePath = "./" + relativePath
+        if (!relativePath.includes('/')) relativePath = "./" + relativePath
 
         // add curly parens if it is not the default export
-        isDefaultExport ? componentImport = `import ${componentName} from '${relativePath}';` : 
+        isDefaultExport ? componentImport = `import ${componentName} from '${relativePath}';` :
           componentImport = `import {${componentName}} from '${relativePath}';`;
 
         testOutput = componentImport + testOutput;
@@ -209,7 +208,7 @@ export class jest {
 
       //************************************************************//
 
-      const prettyTestOutput = prettier.format(testOutput, { parser: "babel" });
+      const prettyTestOutput = prettier.format(testOutput, {parser: "babel"});
 
       console.log(prettyTestOutput);
       // save the test outputs for a return if the user is not writing to a file
