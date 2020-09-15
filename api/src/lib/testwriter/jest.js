@@ -114,6 +114,7 @@ export class jest {
 
         envPath = await this.findEnvPath(path.dirname(componentPath));
 
+        // figure out the path to write the test
         if (envPath) {
           foundPath = envPath
         } else {
@@ -125,7 +126,7 @@ export class jest {
         }
         if (foundPath.slice(-1) !== "/") foundPath = foundPath.concat("/");
 
-        // console.log("found path found: ", envPath, foundPath);
+
       }
     }
 
@@ -187,7 +188,6 @@ export class jest {
         // grab only the relative filepath with filename but no extension
         let relativePath = path.relative(foundPath, componentPath);
         relativePath = path.join(path.parse(relativePath).dir, path.parse(relativePath).name)
-
         if (!relativePath.includes('/')) relativePath = "./" + relativePath
 
         // add curly parens if it is not the default export

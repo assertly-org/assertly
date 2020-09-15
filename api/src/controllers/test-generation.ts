@@ -2,6 +2,7 @@ import { ControllerBase, ControllerProperties, get, post, controller, format, Re
 import { testWriter } from '../lib/testwriter/test-libraries';
 import path from 'path';
 import { createAst, findComponentName, reconcileWithAst } from '../lib/utils';
+const fs = require('fs');
 
 /**
  * Test Generation Controller
@@ -17,6 +18,31 @@ export default class TestGeneration extends ControllerBase {
     this.input = input;
   }
 
+  getPathArr(componentPath: string) {
+    const pathArr = componentPath.split(/[\\\/]/);
+
+    // remove empty leading ""
+    pathArr.shift();
+
+    return pathArr;
+  }
+
+  getTestFileName(componentPath: string) {
+    const pathArr = this.getPathArr(componentPath);
+
+    const originalFile = pathArr.pop();
+    const extensionPattern = /\.[0-9a-z]+$/i;
+    const extension = originalFile.match(extensionPattern)[0];
+
+    let fileName = originalFile.replace(extension, `.spec${extension}`);
+
+    // convert js -> jsx for now
+    if (extension.charAt(extension.length - 1) !== 'x') {
+      fileName += 'x';
+    }
+
+    return fileName;
+  }
 
   @post('')
   async createTest(event: Array<any>): Promise<any> {
@@ -31,6 +57,8 @@ export default class TestGeneration extends ControllerBase {
       event.forEach(event => readPromises.push(reconcileWithAst(event)));
       const reconciledEvents = await Promise.all(readPromises);
       // console.log('reconciled event', reconciledEvents);
+
+     
 
       const jestTestWriter = new testWriter('jest', reconciledEvents);
       let unitTests: any;
