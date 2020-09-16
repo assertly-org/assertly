@@ -37,17 +37,6 @@ const babeloptions: ParserOptions = {
   ]
 };
 
-export async function createAst(filename: string) {
-
-  let data: string;
-  let ast: object;
-
-  data = await fs.promises.readFile(filename, 'utf8');
-  ast = babelparser.parse(data, babeloptions);
-
-  return ast;
-}
-
 export async function reconcileWithAst(event: any) {
 
   let fileAst: any;
@@ -68,18 +57,39 @@ export async function reconcileWithAst(event: any) {
   return event;
 }
 
-export function findComponentName(ast: any, lineNumber: number): string {
-  let astName: string;
-  for (let i = 1; i < ast?.tokens?.length; i++) {
-    if (ast.tokens[i - 1].value === 'class' || ast.tokens[i - 1].value === 'function') {
-      astName = ast.tokens[i].value;
-    }
-    if (ast.tokens[i].loc.start.line === lineNumber) break;
+export async function findTestWriteInfo(event: any) {
+  let testWritePath = '';
+  const envPath = await findEnvPath(path.dirname(event?.componentInfo?.filename));
+  const testFileName = getTestFileName(event?.componentInfo?.filename);
+
+  console.log('right before findwritePath12345', envPath);
+  // figure out the path to write the test
+  if (envPath) {
+    testWritePath = envPath;
+  } else {
+    console.log('right before findwritePath');
+    testWritePath = await findWritePath(
+      path.dirname(event?.componentInfo?.filename),
+      10,
+      path.dirname(event?.componentInfo?.filename),
+    );
   }
-  return astName;
+  if (testWritePath.slice(-1) !== '/') testWritePath = testWritePath.concat('/');
+  return {writePath: testWritePath, testFileName};
 }
 
-export function findIsDefaultExport(ast: any): boolean {
+async function createAst(filename: string) {
+
+  let data: string;
+  let ast: object;
+
+  data = await fs.promises.readFile(filename, 'utf8');
+  ast = babelparser.parse(data, babeloptions);
+
+  return ast;
+}
+
+function findIsDefaultExport(ast: any): boolean {
 
   for (let i = 1; i < ast?.tokens?.length; i++) {
     if (ast.tokens[i ].value === 'default' && ast.tokens[i - 1].value === 'export') {
@@ -88,25 +98,6 @@ export function findIsDefaultExport(ast: any): boolean {
   }
 
   return false;
-}
-
-
-export async function findTestWriteInfo(event: any) {
-  let writePath = ''
-  const envPath = await findEnvPath(path.dirname(event?.componentInfo?.filename));
-  // figure out the path to write the test
-  if (envPath) {
-    writePath = envPath
-  } else {
-    writePath = await findWritePath(
-      path.dirname(event?.componentInfo?.filename),
-      10,
-      path.dirname(event?.componentInfo?.filename),
-    );
-  }
-  if (writePath.slice(-1) !== "/") writePath = writePath.concat("/");
-  return writePath
-
 }
 
 async function findEnvPath(componentDir: string) {
@@ -122,7 +113,7 @@ async function findEnvPath(componentDir: string) {
     combined_path = path.join(componentDir, environment_set_path);
   }
   // console.log(environment_set_path, componentDir, combined_path);
-  const exists = await this.checkFilePath(combined_path);
+  const exists = await checkFilePath(combined_path);
 
   if (exists) {
     return combined_path;
@@ -147,7 +138,8 @@ async function findWritePath(filePath: string, maxDepth: any, componentPath: str
 
   // the ENV variable is checked before this method is run, if the ENV variable
   // points to a valid location, the envPath is used and this method is never invoked
-  const filePathExists = await this.checkFilePath(filePath);
+  console.log('recursed! ', filePath);
+  const filePathExists = await checkFilePath(filePath);
 
   if (!filePathExists || filePath === '/' || maxDepth < 0) {
     // console.log('exit condition reached')
@@ -156,8 +148,8 @@ async function findWritePath(filePath: string, maxDepth: any, componentPath: str
 
   const gitFile = path.join(filePath, '.git');
   const configFile = path.join(filePath, 'jest.config.js');
-  const gitExists = await this.checkFilePath(gitFile);
-  const configExists = await this.checkFilePath(configFile);
+  const gitExists = await checkFilePath(gitFile);
+  const configExists = await checkFilePath(configFile);
 
   // check for the existence of the jest config file
   if (configExists) {
@@ -167,7 +159,7 @@ async function findWritePath(filePath: string, maxDepth: any, componentPath: str
     // if it does exist, check if it has the rootDir key
     if (configs?.rootDir) {
       const jestLocation = path.join(filePath, configs?.rootDir);
-      const jestLocationExists = await this.checkFilePath(jestLocation);
+      const jestLocationExists = await checkFilePath(jestLocation);
       if (jestLocationExists) {
         return jestLocation;
       } else {
@@ -182,10 +174,47 @@ async function findWritePath(filePath: string, maxDepth: any, componentPath: str
     return componentPath;
     // recurse up the tree
   } else {
-    return await this.findWritePath(
+    return await findWritePath(
       path.dirname(filePath),
       maxDepth - 1,
       componentPath,
     );
   }
+}
+
+function getPathArr(componentPath: string) {
+  const pathArr = componentPath.split(/[\\\/]/);
+
+  // remove empty leading ""
+  pathArr.shift();
+
+  return pathArr;
+}
+
+function getTestFileName(componentPath: string) {
+  const pathArr = getPathArr(componentPath);
+
+  const originalFile = pathArr.pop();
+  const extensionPattern = /\.[0-9a-z]+$/i;
+  const extension = originalFile.match(extensionPattern)[0];
+
+  let fileName = originalFile.replace(extension, `.spec${extension}`);
+
+  // convert js -> jsx for now
+  if (extension.charAt(extension.length - 1) !== 'x') {
+    fileName += 'x';
+  }
+
+  return fileName;
+}
+
+function findComponentName(ast: any, lineNumber: number): string {
+  let astName: string;
+  for (let i = 1; i < ast?.tokens?.length; i++) {
+    if (ast.tokens[i - 1].value === 'class' || ast.tokens[i - 1].value === 'function') {
+      astName = ast.tokens[i].value;
+    }
+    if (ast.tokens[i].loc.start.line === lineNumber) break;
+  }
+  return astName;
 }

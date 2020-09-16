@@ -7,14 +7,14 @@ configure({ adapter: new Adapter() });
 describe("CounterCard", () => {
   const props = {
     history: {
-      length: 3,
-      action: "PUSH",
+      length: 2,
+      action: "POP",
       location: {
         pathname: "/countercard",
         search: "",
         hash: "",
         state: null,
-        key: "616cze",
+        key: "t7me4s",
       },
     },
     location: {
@@ -22,7 +22,7 @@ describe("CounterCard", () => {
       search: "",
       hash: "",
       state: null,
-      key: "616cze",
+      key: "t7me4s",
     },
     match: {
       path: "/countercard",

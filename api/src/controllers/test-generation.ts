@@ -1,8 +1,8 @@
 import { ControllerBase, ControllerProperties, get, post, controller, format, Res } from 'ts-api';
 import { testWriter } from '../lib/testwriter/test-libraries';
 import path from 'path';
-import { createAst, findComponentName, reconcileWithAst } from '../lib/utils';
-const fs = require('fs');
+import { reconcileWithAst, findTestWriteInfo } from '../lib/utils';
+
 
 /**
  * Test Generation Controller
@@ -18,47 +18,26 @@ export default class TestGeneration extends ControllerBase {
     this.input = input;
   }
 
-  getPathArr(componentPath: string) {
-    const pathArr = componentPath.split(/[\\\/]/);
-
-    // remove empty leading ""
-    pathArr.shift();
-
-    return pathArr;
-  }
-
-  getTestFileName(componentPath: string) {
-    const pathArr = this.getPathArr(componentPath);
-
-    const originalFile = pathArr.pop();
-    const extensionPattern = /\.[0-9a-z]+$/i;
-    const extension = originalFile.match(extensionPattern)[0];
-
-    let fileName = originalFile.replace(extension, `.spec${extension}`);
-
-    // convert js -> jsx for now
-    if (extension.charAt(extension.length - 1) !== 'x') {
-      fileName += 'x';
-    }
-
-    return fileName;
-  }
-
   @post('')
   async createTest(event: Array<any>): Promise<any> {
     try {
-      const readPromises: Promise<any>[] = [];
+      const astPromises: Promise<any>[] = [];
+      const writeInfoPromises: Promise<any>[] = [];
 
       if (!event) {
         this.input.res.send({ message: 'no test to generate' });
         return;
       }
 
-      event.forEach(event => readPromises.push(reconcileWithAst(event)));
-      const reconciledEvents = await Promise.all(readPromises);
-      // console.log('reconciled event', reconciledEvents);
+      event.forEach(event => astPromises.push(reconcileWithAst(event)));
+      event.forEach(event => writeInfoPromises.push(findTestWriteInfo(event)));
 
-     
+      const reconciledEvents = await Promise.all(astPromises);
+      const writeInfo = await Promise.all(writeInfoPromises);
+
+      console.log('write info event return', writeInfo);
+
+
 
       const jestTestWriter = new testWriter('jest', reconciledEvents);
       let unitTests: any;
