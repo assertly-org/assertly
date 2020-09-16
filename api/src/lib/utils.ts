@@ -58,16 +58,14 @@ export async function reconcileWithAst(event: any) {
 }
 
 export async function findTestWriteInfo(event: any) {
-  let testWritePath = '';
+  let testWritePath = undefined;
   const envPath = await findEnvPath(path.dirname(event?.componentInfo?.filename));
   const testFileName = getTestFileName(event?.componentInfo?.filename);
 
-  console.log('right before findwritePath12345', envPath);
   // figure out the path to write the test
   if (envPath) {
     testWritePath = envPath;
   } else {
-    console.log('right before findwritePath');
     testWritePath = await findWritePath(
       path.dirname(event?.componentInfo?.filename),
       10,
@@ -75,7 +73,7 @@ export async function findTestWriteInfo(event: any) {
     );
   }
   if (testWritePath.slice(-1) !== '/') testWritePath = testWritePath.concat('/');
-  return {writePath: testWritePath, testFileName};
+  return {writePath: testWritePath, testFileName: testFileName};
 }
 
 async function createAst(filename: string) {
@@ -104,15 +102,16 @@ async function findEnvPath(componentDir: string) {
   const environment_set_path = process.env.ASSERTLY_DIRECTORY;
   let combined_path = undefined;
 
-
   if (!environment_set_path) {
-    combined_path = componentDir;
+    combined_path = undefined;
   } else if (path.isAbsolute(environment_set_path)) {
     combined_path = environment_set_path;
   } else {
+    // if environment_set_path is not absolute, it will be interpreted as being relative from the
+    // component directory
     combined_path = path.join(componentDir, environment_set_path);
   }
-  // console.log(environment_set_path, componentDir, combined_path);
+
   const exists = await checkFilePath(combined_path);
 
   if (exists) {
@@ -138,7 +137,6 @@ async function findWritePath(filePath: string, maxDepth: any, componentPath: str
 
   // the ENV variable is checked before this method is run, if the ENV variable
   // points to a valid location, the envPath is used and this method is never invoked
-  console.log('recursed! ', filePath);
   const filePathExists = await checkFilePath(filePath);
 
   if (!filePathExists || filePath === '/' || maxDepth < 0) {
