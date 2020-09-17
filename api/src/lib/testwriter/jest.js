@@ -7,90 +7,6 @@ const writeFileAsync = promisify(fs.writeFile);
 import prettier from "prettier";
 
 export class jest {
-  constructor() {
-    this._maxRecurse = 10;
-  }
-
-  async findEnvPath(componentDir) {
-    const environment_set_path = process.env.ASSERTLY_DIRECTORY;
-    let combined_path = null;
-
-
-    if (!environment_set_path) {
-      combined_path = componentDir
-    } else if (path.isAbsolute(environment_set_path)) {
-      combined_path = environment_set_path
-    } else {
-      combined_path = path.join(componentDir, environment_set_path)
-    }
-    // console.log(environment_set_path, componentDir, combined_path);
-    const exists = await this.checkFilePath(combined_path);
-
-    if (exists) {
-      return combined_path;
-    } else {
-      return null;
-    }
-  }
-
-  async checkFilePath(filePath) {
-    try {
-      await fs.promises.access(filePath);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  async findWritePath(filePath, maxDepth, componentPath) {
-    // exit recursion if directory does not exist
-    // or root path is reached
-    // or max recursion level reached
-
-    // the ENV variable is checked before this method is run, if the ENV variable
-    // points to a valid location, the envPath is used and this method is never invoked
-    const filePathExists = await this.checkFilePath(filePath);
-
-    if (!filePathExists || filePath === "/" || maxDepth < 0) {
-      // console.log('exit condition reached')
-      return componentPath;
-    }
-
-    const gitFile = path.join(filePath, ".git");
-    const configFile = path.join(filePath, "jest.config.js");
-    const gitExists = await this.checkFilePath(gitFile);
-    const configExists = await this.checkFilePath(configFile);
-
-    // check for the existence of the jest config file
-    if (configExists) {
-      // console.log('found jest config', filePath)
-      const configs = require(configFile);
-
-      // if it does exist, check if it has the rootDir key
-      if (configs?.rootDir) {
-        const jestLocation = path.join(filePath, configs?.rootDir);
-        const jestLocationExists = await this.checkFilePath(jestLocation);
-        if (jestLocationExists) {
-          return jestLocation;
-        } else {
-          return componentPath;
-        }
-      } else {
-        return componentPath;
-      }
-      // check if the git file is reached
-    } else if (gitExists) {
-      // console.log('found git file', filePath)
-      return componentPath;
-      // recurse up the tree
-    } else {
-      return await this.findWritePath(
-        path.dirname(filePath),
-        maxDepth - 1,
-        componentPath,
-      );
-    }
-  }
 
   // writeDir is not used in the current build, the findWritePathMethod uses a hueristic to find the relative write path
   // based on whether an environmental variable exists or a jest config exists
@@ -101,8 +17,6 @@ export class jest {
      */
     let componentMap = {};
     let unitTests = [];
-    let foundPath = "";
-    let envPath = null;
 
     for (let actionCounter = 0; actionCounter < input.length; actionCounter++) {
       const payload = input[actionCounter];
@@ -111,27 +25,13 @@ export class jest {
         // component specific things are now in component info key
         const componentPath = payload.componentInfo?.filename;
         componentMap[componentPath] = payload;
-
-        envPath = await this.findEnvPath(path.dirname(componentPath));
-
-        // figure out the path to write the test
-        if (envPath) {
-          foundPath = envPath
-        } else {
-          foundPath = await this.findWritePath(
-            path.dirname(componentPath),
-            this._maxRecurse,
-            path.dirname(componentPath),
-          );
-        }
-        if (foundPath.slice(-1) !== "/") foundPath = foundPath.concat("/");
-
-
       }
     }
 
     for (const componentKey of Object.keys(componentMap)) {
       const component = componentMap[componentKey];
+      const testWriteDir = component.testWriteDir;
+      const testFileName = component.testFileName;
       let testOutput = "";
       let componentImport = "";
 
@@ -142,18 +42,15 @@ export class jest {
       // write the test for the component that caused the click, by mounting and clicking
       if (component.clickHandlerComponent) {
 
-        const clickComponentName =
-          component.clickHandlerComponent?.componentName;
+        const clickComponentName = component.clickHandlerComponent?.componentName;
         const clickProps = component.clickHandlerComponent?.props;
         const clickComponentPath = component.clickHandlerComponent?.filename;
         const clickHandler = "{return true}";
-        const isDefaultExport = component.componentInfo?.isDefaultExport;
+        const clickIsDefaultExport = component.componentInfo?.isDefaultExport;
 
-        let clickRelativePath = path.relative(foundPath, clickComponentPath)
-        clickRelativePath = path.join(path.parse(clickRelativePath).dir, path.parse(clickRelativePath).name)
-        if (!clickRelativePath.includes('/')) clickRelativePath = "./" + clickRelativePath
+        const clickRelativePath = this.getImportFromLocation(testWriteDir, clickComponentPath);
 
-        isDefaultExport ? componentImport = `import ${clickComponentName} from '${clickRelativePath}';` :
+        clickIsDefaultExport ? componentImport = `import ${clickComponentName} from '${clickRelativePath}';` :
           componentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
 
         testOutput = componentImport + testOutput;
@@ -175,6 +72,7 @@ export class jest {
       }
 
       // write the tests for the component(s), do not include the component that caused the click; that test is included seperately
+      // if they are the same component, only the click version will be created
       if (
         component.componentInfo?.componentName !==
         component.clickHandlerComponent?.componentName
@@ -186,9 +84,8 @@ export class jest {
         const componentPath = componentKey;
 
         // grab only the relative filepath with filename but no extension
-        let relativePath = path.relative(foundPath, componentPath);
-        relativePath = path.join(path.parse(relativePath).dir, path.parse(relativePath).name)
-        if (!relativePath.includes('/')) relativePath = "./" + relativePath
+
+        const relativePath = this.getImportFromLocation(testWriteDir, componentPath);
 
         // add curly parens if it is not the default export
         isDefaultExport ? componentImport = `import ${componentName} from '${relativePath}';` :
@@ -214,22 +111,27 @@ export class jest {
       // save the test outputs for a return if the user is not writing to a file
       unitTests.push(prettyTestOutput);
 
-      const fileName = this.getTestFileName(componentPath);
-      const writePath = path.join(foundPath, fileName);
+      const writePath = path.join(testWriteDir, testFileName);
 
-      if (fs.existsSync(foundPath)) {
+      if (fs.existsSync(testWriteDir)) {
         // unlink the file in the specific directory if it already exists
         if (fs.existsSync(writePath)) {
           fs.unlinkSync(writePath);
         }
-
         // write the file
         await writeFileAsync(writePath, prettyTestOutput);
       } else {
-        console.log(`Specified write directory ${foundPath} does not eixst.`);
+        console.log(`Specified write directory ${testWriteDir} does not eixst.`);
         return unitTests;
       }
     }
+  }
+
+  getImportFromLocation(writeDir, componentPath) {
+    let relativePath = path.relative(writeDir, componentPath)
+    relativePath = path.join(path.parse(relativePath).dir, path.parse(relativePath).name)
+    if (!relativePath.includes('/')) relativePath = "./" + relativePath
+    return relativePath
   }
 
   writeHead() {
@@ -357,33 +259,4 @@ export class jest {
   `;
   }
 
-  getPathArr(componentPath) {
-    let pathArr = componentPath.split(/[\\\/]/);
-
-    // remove empty leading ""
-    pathArr.shift();
-
-    return pathArr;
-  }
-
-  findAppBasePath(componentPath) {
-    const pathArr = this.getPathArr(componentPath);
-  }
-
-  getTestFileName(componentPath) {
-    const pathArr = this.getPathArr(componentPath);
-
-    const originalFile = pathArr.pop();
-    const extensionPattern = /\.[0-9a-z]+$/i;
-    const extension = originalFile.match(extensionPattern)[0];
-
-    let fileName = originalFile.replace(extension, `.spec${extension}`);
-
-    // convert js -> jsx for now
-    if (extension.charAt(extension.length - 1) !== "x") {
-      fileName += "x";
-    }
-
-    return fileName;
-  }
 }

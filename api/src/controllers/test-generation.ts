@@ -1,7 +1,8 @@
-import { ControllerBase, ControllerProperties, get, post, controller, format, Res } from 'ts-api';
+import { ControllerBase, ControllerProperties, get, post, controller, format, Res, put } from 'ts-api';
 import { testWriter } from '../lib/testwriter/test-libraries';
 import path from 'path';
 import { reconcileWithAst, findTestWriteInfo } from '../lib/utils';
+import { validateLocaleAndSetLanguage } from 'typescript';
 
 
 /**
@@ -32,14 +33,14 @@ export default class TestGeneration extends ControllerBase {
       event.forEach(event => astPromises.push(reconcileWithAst(event)));
       event.forEach(event => writeInfoPromises.push(findTestWriteInfo(event)));
 
-      const reconciledEvents = await Promise.all(astPromises);
+      const astReconciledEvents = await Promise.all(astPromises);
       const writeInfo = await Promise.all(writeInfoPromises);
 
-      console.log('write info event return', writeInfo);
+      // combine the post processed event(s) into a single array to send to the test writer
+      const finalModifiedEvents = astReconciledEvents.map( (val, index, arr) => {
+        return {...val, ...writeInfo[index]}; });
 
-
-
-      const jestTestWriter = new testWriter('jest', reconciledEvents);
+      const jestTestWriter = new testWriter('jest', finalModifiedEvents);
       let unitTests: any;
 
       unitTests = jestTestWriter.write();
@@ -56,7 +57,20 @@ export default class TestGeneration extends ControllerBase {
       return;
     }
     return {
+      testkey: '1234',
       success: true
     };
+  }
+
+  // takes a array of objects with filepaths and will return the objects with appended keys for whether the file exists 
+  // and the various describe / it blocks
+  @get('')
+  async checkExistingTest(componentPaths: Array<any>): Promise<any> {
+  }
+
+  // takes an array of objects with component names and the describe block to replace/update
+  // will update those tests with the information given
+  @put('')
+  async updateTest(componentPaths: Array<any>): Promise<any> {
   }
 }

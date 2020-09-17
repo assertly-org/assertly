@@ -73,7 +73,7 @@ export async function findTestWriteInfo(event: any) {
     );
   }
   if (testWritePath.slice(-1) !== '/') testWritePath = testWritePath.concat('/');
-  return {writePath: testWritePath, testFileName: testFileName};
+  return {testWriteDir: testWritePath, testFileName: testFileName};
 }
 
 async function createAst(filename: string) {

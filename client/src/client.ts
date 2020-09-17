@@ -117,7 +117,7 @@ export default class AssertlyClient implements ClientInterface {
       // there should only be one match here on the filter
       // componentInfo: message.componentInfo?.filter( (val:any) => val.componentName === event.target?.innerHTML)
       componentInfo: selectedComponent
-    });
+    }).then(res => {console.log('dot then', res)});
 
     this.removeSingleMenu(divID);
     // const menuDiv = document.getElementById(divID);
@@ -143,6 +143,7 @@ export default class AssertlyClient implements ClientInterface {
     const componentInfo = getComponentInfo(reactComponent, 10, []);
 
     // find the closest click handler that would have been triggered
+    // note, slice(0) copies the array
     const clickHandler = componentInfo?.slice(0)?.reverse()?.reduce(findClickHandler, null);
 
 
@@ -249,7 +250,7 @@ export default class AssertlyClient implements ClientInterface {
 
     const url = `//localhost:3020/api/accounts/${accountId}/events/`;
 
-    await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       mode: "cors",
       cache: "no-cache",
@@ -264,6 +265,8 @@ export default class AssertlyClient implements ClientInterface {
         placeholder: null,
       }),
     });
+
+    return response.json()
   };
 }
 
