@@ -57,23 +57,27 @@ export async function reconcileWithAst(event: any) {
   return event;
 }
 
-export async function findTestWriteInfo(event: any) {
+export async function findTestWriteInfo(filepath: string) {
   let testWritePath = undefined;
-  const envPath = await findEnvPath(path.dirname(event?.componentInfo?.filename));
-  const testFileName = getTestFileName(event?.componentInfo?.filename);
+  const envPath = await findEnvPath(path.dirname(filepath));
+  const testFileName = getTestFileName(filepath);
 
   // figure out the path to write the test
   if (envPath) {
     testWritePath = envPath;
   } else {
     testWritePath = await findWritePath(
-      path.dirname(event?.componentInfo?.filename),
+      path.dirname(filepath),
       10,
-      path.dirname(event?.componentInfo?.filename),
+      path.dirname(filepath),
     );
   }
   if (testWritePath.slice(-1) !== '/') testWritePath = testWritePath.concat('/');
-  return {testWriteDir: testWritePath, testFileName: testFileName};
+
+  const existingFile = await checkFilePath(path.join(testWritePath, testFileName));
+  // console.log('checking existing stuff: ', path.join(testWritePath, testFileName), existingFile);
+
+  return {testWriteDir: testWritePath, testFileName: testFileName, existingFile: existingFile};
 }
 
 async function createAst(filename: string) {

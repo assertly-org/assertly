@@ -62,10 +62,27 @@ export default class TestGeneration extends ControllerBase {
     };
   }
 
-  // takes a array of objects with filepaths and will return the objects with appended keys for whether the file exists 
+  // takes a array of objects with filepaths and will return the objects with appended keys for whether the file exists
   // and the various describe / it blocks
   @get('')
-  async checkExistingTest(componentPaths: Array<any>): Promise<any> {
+  async checkExistingTest(filepath: string): Promise<any> {
+    try {
+      console.log('name sent', filepath);
+      const writeInfo = await findTestWriteInfo(filepath);
+
+      return {
+        checkedEvent: writeInfo,
+        success: true
+      };
+
+    } catch (e) {
+      console.error('Error checking for existing test');
+      this.input.res.sendStatus(500);
+      return;
+    }
+
+
+
   }
 
   // takes an array of objects with component names and the describe block to replace/update

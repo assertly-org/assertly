@@ -48,21 +48,22 @@ export default class AssertlyClient implements ClientInterface {
     if (reactComponent !== this.previousComponent) {
       this.componentEventCache.forEach((msg) => {
         console.log('in the reconcile');
-        this.sendEvent(msg);
+        // this.sendEvent(msg);
       });
       this.clearEventCache();
     }
   };
 
-  createPopupMenu = (message: Message) => {
+  // remove all divs with a certain classname
+  removeMenusByClassname = (classname: string) => {
+    const previousMenus = Array.from(document.getElementsByClassName(classname));
+    previousMenus?.map((val: any) => val.remove());
+  }
 
+  setupMenuDiv = (mouseEvent: MouseEvent) => {
     const eventTime = new Date().getTime();
     const divID = "componentMenu" + eventTime;
-    const mouseEvent = event as MouseEvent;
     const menuDiv = document.createElement("DIV");
-
-    const previousMenus = Array.from(document.getElementsByClassName('componentMenu'));
-    previousMenus?.map((val: any) => val.remove());
 
     menuDiv.setAttribute("id", divID);
     menuDiv.setAttribute("class", 'componentMenu');
@@ -70,9 +71,24 @@ export default class AssertlyClient implements ClientInterface {
     menuDiv.style.position = "absolute";
     menuDiv.style.left = mouseEvent.x + 'px';
     menuDiv.style.top = mouseEvent.y + 'px';
-
-    // needs to go on top of any other existing modal
     menuDiv.style.zIndex = '9999999999999';
+    return divID
+  }
+
+  appendCancelButton = (classname: string) => {
+    const CancelBtn = document.createElement("BUTTON");
+    CancelBtn.style.width = '150px';
+    CancelBtn.innerHTML = 'Cancel';
+    CancelBtn.addEventListener('click', async () => await this.removeSingleMenu(classname));
+    document.getElementById(classname)?.appendChild(CancelBtn);
+  }
+
+  createPopupMenu = (message: Message, mouseEvent: MouseEvent) => {
+
+    // remove all existing menus
+    this.removeMenusByClassname('componentMenu')
+    // create the dom element and store the element ID
+    const divID = this.setupMenuDiv(mouseEvent)    
 
     message?.componentInfo?.map((val: any) => {
       console.log("button val: ", val);
@@ -80,27 +96,40 @@ export default class AssertlyClient implements ClientInterface {
       btn.style.width = '150px';
       btn.innerHTML = val?.componentName;
       if (btn.innerHTML) {
-        btn.addEventListener('click', () => this.componentMenuClick(event, divID, message));
-        menuDiv.appendChild(btn);
+        btn.addEventListener('click', async (event) => this.componentMenuClick(event, divID, message));
+        document.getElementById(divID)?.appendChild(btn);
         const br = document.createElement("br");
-        menuDiv.appendChild(br);
+        document.getElementById(divID)?.appendChild(br);
       }
     });
+    this.appendCancelButton(divID)
 
-    const CancelBtn = document.createElement("BUTTON");
-    CancelBtn.style.width = '150px';
-    CancelBtn.innerHTML = 'Cancel';
-    CancelBtn.addEventListener('click', () => this.removeSingleMenu(divID));
-    menuDiv.appendChild(CancelBtn);
   };
 
-  removeSingleMenu = (divID: any) => {
+  createExistingTestMenu = async (event: any, existingTestResponse: any) => {
+   
+    const existingTestDivID = this.setupMenuDiv(event)  
+    const test = ["a","b"]
+
+    test.map( val => {
+      const btn = document.createElement("BUTTON");
+      btn.style.width = '150px';
+      btn.innerHTML = val;
+      document.getElementById(existingTestDivID)?.appendChild(btn);
+      const br = document.createElement("br");
+      document.getElementById(existingTestDivID)?.appendChild(br);
+    })
+    this.appendCancelButton(existingTestDivID)
+  }
+
+  removeSingleMenu = async (divID: any) => {
     const menuDiv = document.getElementById(divID);
     menuDiv?.remove();
   };
 
-  componentMenuClick = (event: any, divID: any, message: Message): any => {
-    // console.log('this is the click call back: ', event)
+  componentMenuClick = async (event: any, divID: any, message: Message): Promise<any> => {
+
+    await this.removeSingleMenu(divID);
 
     const selectedComponent = message.componentInfo?.reduce(
       (acc: any, curr: any) => {
@@ -112,18 +141,22 @@ export default class AssertlyClient implements ClientInterface {
       }, null);
 
     event?.stopPropagation();
-    this.sendEvent({
-      ...message,
-      // there should only be one match here on the filter
-      // componentInfo: message.componentInfo?.filter( (val:any) => val.componentName === event.target?.innerHTML)
-      componentInfo: selectedComponent
-    }).then(res => {console.log('dot then', res)});
+    
+    const existingTestResponse = await this.checkForExistingTest(selectedComponent?.filename);
+    
+    const response = await this.createExistingTestMenu(event, existingTestResponse)
 
-    this.removeSingleMenu(divID);
-    // const menuDiv = document.getElementById(divID);
-    // menuDiv?.remove()
+    // this.sendEvent({
+    //   ...message,
+    //   // there should only be one match here on the filter
+    //   // componentInfo: message.componentInfo?.filter( (val:any) => val.componentName === event.target?.innerHTML)
+    //   componentInfo: selectedComponent
+    // }).then(res => {console.log('dot then', res)});
+
 
   };
+
+
 
   getMessage = (reactComponent: any, event: KeyboardEvent | Event): Message => {
 
@@ -233,7 +266,7 @@ export default class AssertlyClient implements ClientInterface {
       this.previousComponent = reactComponent;
 
       // message is sent when something in the popup menu is selected
-      if (mouseEvent?.metaKey) this.createPopupMenu(msg);
+      if (mouseEvent?.metaKey) this.createPopupMenu(msg, mouseEvent);
       // this.sendEvent(msg);
     } catch (e) {
       console.error("Error recording event", e);
@@ -264,6 +297,31 @@ export default class AssertlyClient implements ClientInterface {
         // TODO: test set id should be set when creating/loading testset in the runner
         placeholder: null,
       }),
+    });
+
+    return response.json()
+  };
+
+  checkForExistingTest = async (filepath: string) => {
+    let accountId = (window as { [key: string]: any })["dataLayer"][0]["apiKey"];
+
+    // rather get a 403 than a bad route
+    if (!accountId) {
+      accountId = 1;
+    }
+
+    const uriFilepath = encodeURI(filepath)
+    const url = `//localhost:3020/api/accounts/${accountId}/events/?filepath=${uriFilepath}`;
+
+    console.log('url hit: ', url, uriFilepath)
+    const response = await fetch(url, {
+      method: "GET",
+      mode: "cors",
+      cache: "no-cache",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+      }
     });
 
     return response.json()
