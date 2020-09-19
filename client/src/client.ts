@@ -60,6 +60,11 @@ export default class AssertlyClient implements ClientInterface {
     previousMenus?.map((val: any) => val.remove());
   }
 
+  removeSingleMenu = async (elID: string) => {
+    const menuDiv = document.getElementById(elID);
+    menuDiv?.remove();
+  };
+
   setupMenuDiv = (mouseEvent: MouseEvent) => {
     const eventTime = new Date().getTime();
     const divID = "componentMenu" + eventTime;
@@ -75,12 +80,14 @@ export default class AssertlyClient implements ClientInterface {
     return divID
   }
 
-  appendCancelButton = (classname: string) => {
-    const CancelBtn = document.createElement("BUTTON");
-    CancelBtn.style.width = '150px';
-    CancelBtn.innerHTML = 'Cancel';
-    CancelBtn.addEventListener('click', async () => await this.removeSingleMenu(classname));
-    document.getElementById(classname)?.appendChild(CancelBtn);
+  appendButton = (elID:string , label: string) => {
+    const btn = document.createElement("BUTTON");
+    btn.style.width = '150px';
+    btn.innerHTML = label;
+    document.getElementById(elID)?.appendChild(btn);
+    const br = document.createElement("br");
+    document.getElementById(elID)?.appendChild(br);
+    return btn
   }
 
   createPopupMenu = (message: Message, mouseEvent: MouseEvent) => {
@@ -102,7 +109,8 @@ export default class AssertlyClient implements ClientInterface {
         document.getElementById(divID)?.appendChild(br);
       }
     });
-    this.appendCancelButton(divID)
+    const CancelBtn = this.appendButton(divID, 'Cancel')
+    CancelBtn.addEventListener('click', async () => await this.removeSingleMenu(divID));
 
   };
 
@@ -119,13 +127,10 @@ export default class AssertlyClient implements ClientInterface {
       const br = document.createElement("br");
       document.getElementById(existingTestDivID)?.appendChild(br);
     })
-    this.appendCancelButton(existingTestDivID)
+    const newTestBtn = this.appendButton(existingTestDivID, 'Create New Test')
+    const cancelBtn = this.appendButton(existingTestDivID, 'Cancel')
+    cancelBtn.addEventListener('click', async () => await this.removeSingleMenu(existingTestDivID));
   }
-
-  removeSingleMenu = async (divID: any) => {
-    const menuDiv = document.getElementById(divID);
-    menuDiv?.remove();
-  };
 
   componentMenuClick = async (event: any, divID: any, message: Message): Promise<any> => {
 
@@ -273,7 +278,7 @@ export default class AssertlyClient implements ClientInterface {
     }
   };
 
-  sendEvent = async (message: Message) => {
+  createNewTest = async (message: Message) => {
     let accountId = (window as { [key: string]: any })["dataLayer"][0]["apiKey"];
 
     // rather get a 403 than a bad route
