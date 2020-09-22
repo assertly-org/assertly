@@ -30,8 +30,8 @@ export class jest {
 
     for (const componentKey of Object.keys(componentMap)) {
       const component = componentMap[componentKey];
-      const testWriteDir = component.testWriteDir;
-      const testFileName = component.testFileName;
+      const testWriteDir = component.checkedEvent?.testWriteDir;
+      const testFileName = component.checkedEvent?.testFileName;
       let testOutput = "";
       let componentImport = "";
 

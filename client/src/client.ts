@@ -103,7 +103,7 @@ export default class AssertlyClient implements ClientInterface {
       btn.style.width = '150px';
       btn.innerHTML = val?.componentName;
       if (btn.innerHTML) {
-        btn.addEventListener('click', async (event) => this.componentMenuClick(event, divID, message));
+        btn.addEventListener('click', async (event) => await this.componentMenuClick(event, divID, message));
         document.getElementById(divID)?.appendChild(btn);
         const br = document.createElement("br");
         document.getElementById(divID)?.appendChild(br);
@@ -128,8 +128,11 @@ export default class AssertlyClient implements ClientInterface {
       document.getElementById(existingTestDivID)?.appendChild(br);
     })
     const newTestBtn = this.appendButton(existingTestDivID, 'Create New Test')
+
     const cancelBtn = this.appendButton(existingTestDivID, 'Cancel')
     cancelBtn.addEventListener('click', async () => await this.removeSingleMenu(existingTestDivID));
+
+    return {newTestBtn: newTestBtn, existingTestMenuID: existingTestDivID}
   }
 
   componentMenuClick = async (event: any, divID: any, message: Message): Promise<any> => {
@@ -147,9 +150,22 @@ export default class AssertlyClient implements ClientInterface {
 
     event?.stopPropagation();
     
+    // check for existing tests
     const existingTestResponse = await this.checkForExistingTest(selectedComponent?.filename);
     
-    const response = await this.createExistingTestMenu(event, existingTestResponse)
+    // the response will contain the dom elements of the buttons for either the existing tests or
+    // to create a new test
+    const existingTestMenuResponse = await this.createExistingTestMenu(event, existingTestResponse)
+
+    // add listener for creating a brand new test
+    existingTestMenuResponse.newTestBtn.addEventListener('click', async () => {
+      await this.createNewTest({
+        ...message,
+        componentInfo: selectedComponent,
+        checkedEvent: existingTestResponse.checkedEvent
+      })
+      await this.removeSingleMenu(existingTestMenuResponse.existingTestMenuID);
+    });
 
     // this.sendEvent({
     //   ...message,
@@ -205,7 +221,8 @@ export default class AssertlyClient implements ClientInterface {
       value: inputTarget.value,
       writeTestLocation: '',
       componentInfo: componentInfo,
-      clickHandlerComponent: clickHandler
+      clickHandlerComponent: clickHandler,
+      checkedEvent: undefined
 
     };
 
@@ -280,6 +297,8 @@ export default class AssertlyClient implements ClientInterface {
 
   createNewTest = async (message: Message) => {
     let accountId = (window as { [key: string]: any })["dataLayer"][0]["apiKey"];
+
+    console.log('message: ', message );
 
     // rather get a 403 than a bad route
     if (!accountId) {

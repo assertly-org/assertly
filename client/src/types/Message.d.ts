@@ -17,4 +17,5 @@ export default interface Message {
   writeTestLocation: string;
   componentInfo: any;
   clickHandlerComponent: any;
+  checkedEvent: any;
 }

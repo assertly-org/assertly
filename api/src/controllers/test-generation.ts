@@ -23,7 +23,6 @@ export default class TestGeneration extends ControllerBase {
   async createTest(event: Array<any>): Promise<any> {
     try {
       const astPromises: Promise<any>[] = [];
-      const writeInfoPromises: Promise<any>[] = [];
 
       if (!event) {
         this.input.res.send({ message: 'no test to generate' });
@@ -31,16 +30,10 @@ export default class TestGeneration extends ControllerBase {
       }
 
       event.forEach(event => astPromises.push(reconcileWithAst(event)));
-      event.forEach(event => writeInfoPromises.push(findTestWriteInfo(event)));
 
       const astReconciledEvents = await Promise.all(astPromises);
-      const writeInfo = await Promise.all(writeInfoPromises);
 
-      // combine the post processed event(s) into a single array to send to the test writer
-      const finalModifiedEvents = astReconciledEvents.map( (val, index, arr) => {
-        return {...val, ...writeInfo[index]}; });
-
-      const jestTestWriter = new testWriter('jest', finalModifiedEvents);
+      const jestTestWriter = new testWriter('jest', astReconciledEvents);
       let unitTests: any;
 
       unitTests = jestTestWriter.write();
@@ -57,7 +50,6 @@ export default class TestGeneration extends ControllerBase {
       return;
     }
     return {
-      testkey: '1234',
       success: true
     };
   }
@@ -67,8 +59,9 @@ export default class TestGeneration extends ControllerBase {
   @get('')
   async checkExistingTest(filepath: string): Promise<any> {
     try {
-      console.log('name sent', filepath);
+      // console.log('name sent', filepath);
       const writeInfo = await findTestWriteInfo(filepath);
+      // console.log('information from the GET request', writeInfo);
 
       return {
         checkedEvent: writeInfo,
