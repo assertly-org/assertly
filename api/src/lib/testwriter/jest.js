@@ -92,150 +92,139 @@ export class jest {
     }
   }
 
-  // writeDir is not used in the current build, the findWritePathMethod uses a hueristic to find the relative write path
-  // based on whether an environmental variable exists or a jest config exists
+  /* From a set of tests, get a unique list of components
+    writeDir is not used in the current build, the findWritePathMethod uses a heuristic to find the relative write path
+    based on whether an environmental variable exists or a jest config exists
+   */
   async write(writeDir = null, input = null) {
-
-    /*
-     From a set of tests, get a unique list of components
-     */
-    let componentMap = {};
+    let component = {};
     let unitTests = [];
-    let foundPath = "";
+    let componentFileDir = "";
     let envPath = null;
+    let wrapperType = 'shallow';
 
-    for (let actionCounter = 0; actionCounter < input.length; actionCounter++) {
-      const payload = input[actionCounter];
+    // find the file path for the component
+    if (input && input.length) {
+      const payload = input[0];
 
       if (payload) {
         // component specific things are now in component info key
         const componentPath = payload.componentInfo?.filename;
-        componentMap[componentPath] = payload;
+        component = payload;
 
         envPath = await this.findEnvPath(path.dirname(componentPath));
 
         if (envPath) {
-          foundPath = envPath
+          componentFileDir = envPath
         } else {
-          foundPath = await this.findWritePath(
+          componentFileDir = await this.findWritePath(
             path.dirname(componentPath),
             this._maxRecurse,
             path.dirname(componentPath),
           );
         }
-        if (foundPath.slice(-1) !== "/") foundPath = foundPath.concat("/");
-
-        // console.log("found path found: ", envPath, foundPath);
+        if (componentFileDir.slice(-1) !== "/") componentFileDir = componentFileDir.concat("/");
       }
     }
 
-    for (const componentKey of Object.keys(componentMap)) {
-      const component = componentMap[componentKey];
-      let testOutput = "";
-      let componentImport = "";
+    console.log('componentFileDir', componentFileDir);
 
-      console.log('Event: \n', component)
+    let testOutput = "";
+    let componentImport = "";
 
-      testOutput += this.writeHead();
+    console.log('Event: \n', component)
 
-      // write the test for the component that caused the click, by mounting and clicking
-      if (component.clickHandlerComponent) {
+    let clickTestBlock = '';
+    if (component.clickHandlerComponent) {
+      wrapperType = 'mount';
 
-        const clickComponentName =
-          component.clickHandlerComponent?.componentName;
-        const clickProps = component.clickHandlerComponent?.props;
-        const clickComponentPath = component.clickHandlerComponent?.filename;
-        const clickHandler = "{return true}";
-        const isDefaultExport = component.componentInfo?.isDefaultExport;
+      const clickComponentName =
+        component.clickHandlerComponent?.componentName;
+      const clickProps = component.clickHandlerComponent?.props;
+      const clickComponentPath = component.clickHandlerComponent?.filename;
+      const isDefaultExport = component.componentInfo?.isDefaultExport;
 
-        let clickRelativePath = path.relative(foundPath, clickComponentPath)
-        clickRelativePath = path.join(path.parse(clickRelativePath).dir, path.parse(clickRelativePath).name)
-        if (!clickRelativePath.includes('/')) clickRelativePath = "./" + clickRelativePath
+      let clickRelativePath = path.relative(componentFileDir, clickComponentPath);
+      clickRelativePath = path.join(path.parse(clickRelativePath).dir, path.parse(clickRelativePath).name);
+      if (!clickRelativePath.includes('/')) clickRelativePath = "./" + clickRelativePath
 
-        isDefaultExport ? componentImport = `import ${clickComponentName} from '${clickRelativePath}';` :
-          componentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
-
-        testOutput = componentImport + testOutput;
-
-        testOutput += this.writeHandlerObject(clickHandler);
-
-        testOutput += this.writeOuterDescribe(clickComponentName);
-        testOutput += this.writeSpy();
-        testOutput += this.writeClickPropsAndShallowWrapper(
-          clickProps,
-          clickComponentName
-        );
-
-        testOutput += this.basicClickTest();
-        testOutput += this.basicRenderTest();
-
-        // close outer describe
-        testOutput += this.closeBlock();
-      }
-
-      // write the tests for the component(s), do not include the component that caused the click; that test is included seperately
-      if (
-        component.componentInfo?.componentName !==
-        component.clickHandlerComponent?.componentName
-      ) {
-        // component specific things are now in component info key
-        const componentName = component.componentInfo?.componentName;
-        const props = component.componentInfo?.props;
-        const isDefaultExport = component.componentInfo?.isDefaultExport;
-        const componentPath = componentKey;
-
-        // grab only the relative filepath with filename but no extension
-        let relativePath = path.relative(foundPath, componentPath);
-        relativePath = path.join(path.parse(relativePath).dir, path.parse(relativePath).name)
-
-        if (!relativePath.includes('/')) relativePath = "./" + relativePath
-
-        // add curly parens if it is not the default export
-        isDefaultExport ? componentImport = `import ${componentName} from '${relativePath}';` :
-          componentImport = `import {${componentName}} from '${relativePath}';`;
-
-        testOutput = componentImport + testOutput;
-
-        testOutput += this.writeOuterDescribe(componentName);
-
-        testOutput += this.writePropsAndShallowWrapper(props, componentName);
-
-        testOutput += this.basicRenderTest();
-
-        // close outer describe
-        testOutput += this.closeBlock();
-      }
-
-      //************************************************************//
-
-      const prettyTestOutput = prettier.format(testOutput, {parser: "babel"});
-
-      console.log(prettyTestOutput);
-      // save the test outputs for a return if the user is not writing to a file
-      unitTests.push(prettyTestOutput);
-
-      const fileName = this.getTestFileName(componentPath);
-      const writePath = path.join(foundPath, fileName);
-
-      if (fs.existsSync(foundPath)) {
-        // unlink the file in the specific directory if it already exists
-        if (fs.existsSync(writePath)) {
-          fs.unlinkSync(writePath);
-        }
-
-        // write the file
-        await writeFileAsync(writePath, prettyTestOutput);
+      let clickComponentImport = '';
+      if (isDefaultExport) {
+        clickComponentImport = `import ${clickComponentName} from '${clickRelativePath}';`
       } else {
-        console.log(`Specified write directory ${foundPath} does not eixst.`);
-        return unitTests;
+        clickComponentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
       }
+
+      clickTestBlock = this.childClickTest(clickComponentName, clickProps)
+    }
+
+    testOutput += this.writeHead(wrapperType);
+
+    // component specific things are now in component info key
+    const componentName = component.componentInfo?.componentName;
+    const props = component.componentInfo?.props;
+    const isDefaultExport = component.componentInfo?.isDefaultExport;
+    const componentPath = component.componentInfo?.filename;
+
+    // grab only the relative filepath with filename but no extension
+    let relativePath = path.relative(componentFileDir, componentPath);
+    relativePath = path.join(path.parse(relativePath).dir, path.parse(relativePath).name)
+
+    if (!relativePath.includes('/')) relativePath = "./" + relativePath
+
+    if (isDefaultExport) {
+      componentImport = `import ${componentName} from '${relativePath}';`;
+    } else {
+      componentImport = `import {${componentName}} from '${relativePath}';`;
+    }
+
+    testOutput += componentImport;
+    if (clickComponentImport) {
+      testOutput += clickComponentImport;
+    }
+
+    testOutput += '\n';
+
+    testOutput += this.writeOuterDescribe(componentName);
+
+    testOutput += this.writePropsAndWrapper(props, componentName, wrapperType);
+
+    testOutput += this.basicRenderTest();
+
+    testOutput += clickTestBlock;
+
+    // close outer describe
+    testOutput += this.closeBlock();
+
+    //************************************************************//
+
+    const prettyTestOutput = prettier.format(testOutput, {parser: "babel"});
+
+    console.log(prettyTestOutput);
+    // save the test outputs for a return if the user is not writing to a file
+    unitTests.push(prettyTestOutput);
+
+    const fileName = this.getTestFileName(componentPath);
+    const writePath = path.join(componentFileDir, fileName);
+
+    if (fs.existsSync(componentFileDir)) {
+      // unlink the file in the specific directory if it already exists
+      if (fs.existsSync(writePath)) {
+        fs.unlinkSync(writePath);
+      }
+
+      // write the file
+      await writeFileAsync(writePath, prettyTestOutput);
+    } else {
+      console.log(`Specified write directory ${componentFileDir} does not exist.`);
+      return unitTests;
     }
   }
 
-  writeHead() {
+  writeHead(wrapperType) {
     return `
         import React from 'react';
-        import { configure, shallow } from 'enzyme';
+        import { configure, ${wrapperType} } from 'enzyme';
         import Adapter from 'enzyme-adapter-react-16';
         configure({ adapter: new Adapter() });
 
@@ -303,25 +292,17 @@ export class jest {
     `;
   }
 
-  writeShallowWrapper(componentName) {
+  writeWrapper(componentName, wrapperType) {
     return `
-      const wrapper = shallow(<${componentName} {...props} />);
+      const wrapper = ${wrapperType}(<${componentName} {...props} />);
     `;
   }
 
-  writePropsAndShallowWrapper(props, componentName) {
+  writePropsAndWrapper(props, componentName, wrapperType) {
     return `
       ${this.writeProps(props)}
       
-      ${this.writeShallowWrapper(componentName)}
-    `;
-  }
-
-  writeClickPropsAndShallowWrapper(props, componentName) {
-    return `
-      ${this.writeClickProps(props)}
-      
-      ${this.writeShallowWrapper(componentName)}
+      ${this.writeWrapper(componentName, wrapperType)}
     `;
   }
 
@@ -348,13 +329,37 @@ export class jest {
     `;
   }
 
-  basicClickTest() {
-    return `
-      wrapper.simulate('click');
+  childClickTest(childComponentName, childComponentProps) {
+    if (childComponentName) {
+
+      let targetWrapperFind = `wrapper.find(${childComponentName})`;
+      if (childComponentProps) {
+        // filter just on primitives
+        const strippedProps = this.stripObFunctionsFromProps(childComponentProps);
+        targetWrapperFind = `${targetWrapperFind}.find(${JSON.stringify(strippedProps)})`;
+      }
+
+      return `
       ${this.writeItBlock("is successfully clicked")}
-        expect(spy).toHaveBeenCalled();
+        const eventTargetWrapper = ${targetWrapperFind}.first();
+        eventTargetWrapper.simulate("click");
+        // assert outcome such as expect(spy).toHaveBeenCalled();
       ${this.closeBlock()}
-  `;
+      `;
+    }
+
+    return '';
+  }
+
+  stripObFunctionsFromProps(props) {
+    let strippedProps = {};
+    for (const prop of Object.keys(props)) {
+      if (typeof props[prop] !== 'object' && props[prop] !== '[Function]') {
+        strippedProps[prop] = props[prop];
+      }
+    }
+
+    return strippedProps;
   }
 
   getPathArr(componentPath) {
