@@ -1,34 +1,27 @@
-import WrapperButton from "./WrapperButton";
 import React from "react";
-import { configure, shallow } from "enzyme";
+import { configure, mount } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 configure({ adapter: new Adapter() });
 
-const handlers = {
-  onClick() {
-    return true;
-  },
-};
+import WrapperButton from "./WrapperButton";
+import WrapperButton from "./WrapperButton";
 
 describe("WrapperButton", () => {
-  const spy = jest.spyOn(handlers, "onClick");
+  const props = { variant: "primary", size: "lg", onClick: "[Function]" };
 
-  const props = {
-    variant: "primary",
-    size: "lg",
-    onClick: () => handlers.onClick(),
-  };
-
-  const wrapper = shallow(<WrapperButton {...props} />);
-
-  wrapper.simulate("click");
-
-  it("is successfully clicked", () => {
-    expect(spy).toHaveBeenCalled();
-  });
+  const wrapper = mount(<WrapperButton {...props} />);
 
   it("exists and is not null", () => {
     expect(wrapper.exists()).toBe(true);
     expect(wrapper.getElement()).not.toBe(null);
+  });
+
+  it("is successfully clicked", () => {
+    const eventTargetWrapper = wrapper
+      .find(WrapperButton)
+      .find({ variant: "primary", size: "lg" })
+      .first();
+    eventTargetWrapper.simulate("click");
+    // assert outcome such as expect(spy).toHaveBeenCalled();
   });
 });

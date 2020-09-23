@@ -8,122 +8,100 @@ import prettier from "prettier";
 
 export class jest {
 
-  // writeDir is not used in the current build, the findWritePathMethod uses a hueristic to find the relative write path
-  // based on whether an environmental variable exists or a jest config exists
+  /* From a set of tests, get a unique list of components
+    writeDir is not used in the current build, the findWritePathMethod uses a heuristic to find the relative write path
+    based on whether an environmental variable exists or a jest config exists
+   */
   async write(writeDir = null, input = null) {
-
-    /*
-     From a set of tests, get a unique list of components
-     */
-    let componentMap = {};
+    let component = {};
     let unitTests = [];
+    let wrapperType = 'shallow';
 
-    for (let actionCounter = 0; actionCounter < input.length; actionCounter++) {
-      const payload = input[actionCounter];
-
-      if (payload) {
-        // component specific things are now in component info key
-        const componentPath = payload.componentInfo?.filename;
-        componentMap[componentPath] = payload;
-      }
+    // for now, input is an array, set the payload to the first element in that array
+    if (input && input.length) {
+      component = input[0];
+    } else {
+      return {error: "No input to jest write method"}
     }
 
-    for (const componentKey of Object.keys(componentMap)) {
-      const component = componentMap[componentKey];
-      const testWriteDir = component.checkedEvent?.testWriteDir;
-      const testFileName = component.checkedEvent?.testFileName;
-      let testOutput = "";
-      let componentImport = "";
+    const testWriteDir = component.checkedEvent?.testWriteDir;
+    const testFileName = component.checkedEvent?.testFileName;
+    let testOutput = "";
+    let componentImport = "";
 
-      console.log('Event: \n', component)
+    console.log('Event: \n', component)
+    
+    let clickTestBlock = '';
+    if (component.clickHandlerComponent) {
+      wrapperType = 'mount';
 
-      testOutput += this.writeHead();
+      const clickComponentName =
+        component.clickHandlerComponent?.componentName;
+      const clickProps = component.clickHandlerComponent?.props;
+      const clickComponentPath = component.clickHandlerComponent?.filename;
+      const clickIsDefaultExport = component.componentInfo?.isDefaultExport;
 
-      // write the test for the component that caused the click, by mounting and clicking
-      if (component.clickHandlerComponent) {
-
-        const clickComponentName = component.clickHandlerComponent?.componentName;
-        const clickProps = component.clickHandlerComponent?.props;
-        const clickComponentPath = component.clickHandlerComponent?.filename;
-        const clickHandler = "{return true}";
-        const clickIsDefaultExport = component.componentInfo?.isDefaultExport;
-
-        const clickRelativePath = this.getImportFromLocation(testWriteDir, clickComponentPath);
-
-        clickIsDefaultExport ? componentImport = `import ${clickComponentName} from '${clickRelativePath}';` :
-          componentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
-
-        testOutput = componentImport + testOutput;
-
-        testOutput += this.writeHandlerObject(clickHandler);
-
-        testOutput += this.writeOuterDescribe(clickComponentName);
-        testOutput += this.writeSpy();
-        testOutput += this.writeClickPropsAndShallowWrapper(
-          clickProps,
-          clickComponentName
-        );
-
-        testOutput += this.basicClickTest();
-        testOutput += this.basicRenderTest();
-
-        // close outer describe
-        testOutput += this.closeBlock();
-      }
-
-      // write the tests for the component(s), do not include the component that caused the click; that test is included seperately
-      // if they are the same component, only the click version will be created
-      if (
-        component.componentInfo?.componentName !==
-        component.clickHandlerComponent?.componentName
-      ) {
-        // component specific things are now in component info key
-        const componentName = component.componentInfo?.componentName;
-        const props = component.componentInfo?.props;
-        const isDefaultExport = component.componentInfo?.isDefaultExport;
-        const componentPath = componentKey;
-
-        // grab only the relative filepath with filename but no extension
-
-        const relativePath = this.getImportFromLocation(testWriteDir, componentPath);
-
-        // add curly parens if it is not the default export
-        isDefaultExport ? componentImport = `import ${componentName} from '${relativePath}';` :
-          componentImport = `import {${componentName}} from '${relativePath}';`;
-
-        testOutput = componentImport + testOutput;
-
-        testOutput += this.writeOuterDescribe(componentName);
-
-        testOutput += this.writePropsAndShallowWrapper(props, componentName);
-
-        testOutput += this.basicRenderTest();
-
-        // close outer describe
-        testOutput += this.closeBlock();
-      }
-
-      //************************************************************//
-
-      const prettyTestOutput = prettier.format(testOutput, {parser: "babel"});
-
-      console.log(prettyTestOutput);
-      // save the test outputs for a return if the user is not writing to a file
-      unitTests.push(prettyTestOutput);
-
-      const writePath = path.join(testWriteDir, testFileName);
-
-      if (fs.existsSync(testWriteDir)) {
-        // unlink the file in the specific directory if it already exists
-        if (fs.existsSync(writePath)) {
-          fs.unlinkSync(writePath);
-        }
-        // write the file
-        await writeFileAsync(writePath, prettyTestOutput);
+      const clickRelativePath = this.getImportFromLocation(testWriteDir, clickComponentPath);
+      
+      let clickComponentImport = '';
+      if (clickIsDefaultExport) {
+        clickComponentImport = `import ${clickComponentName} from '${clickRelativePath}';`
       } else {
-        console.log(`Specified write directory ${testWriteDir} does not eixst.`);
-        return unitTests;
+        clickComponentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
       }
+
+      clickTestBlock = this.childClickTest(clickComponentName, clickProps)
+    }
+
+    testOutput += this.writeHead(wrapperType);
+
+    const componentName = component.componentInfo?.componentName;
+    const props = component.componentInfo?.props;
+    const isDefaultExport = component.componentInfo?.isDefaultExport;
+    const componentPath = component.componentInfo?.filename;
+    const relativePath = this.getImportFromLocation(testWriteDir, componentPath);
+
+    if (isDefaultExport) {
+      componentImport = `import ${componentName} from '${relativePath}';`;
+    } else {
+      componentImport = `import {${componentName}} from '${relativePath}';`;
+    }
+
+    testOutput += componentImport;
+    if (clickComponentImport) {
+      testOutput += clickComponentImport;
+    }
+
+    testOutput += '\n';
+
+    testOutput += this.writeOuterDescribe(componentName);
+
+    testOutput += this.writePropsAndWrapper(props, componentName, wrapperType);
+
+    testOutput += this.basicRenderTest();
+
+    testOutput += clickTestBlock;
+
+    // close outer describe
+    testOutput += this.closeBlock();
+
+    //************************************************************//
+
+    const prettyTestOutput = prettier.format(testOutput, {parser: "babel"});
+    console.log(prettyTestOutput);
+    unitTests.push(prettyTestOutput);
+
+    const writePath = path.join(testWriteDir, testFileName);
+    if (fs.existsSync(testWriteDir)) {
+      // unlink the file in the specific directory if it already exists
+      if (fs.existsSync(writePath)) {
+        fs.unlinkSync(writePath);
+      }
+        // write the file
+      await writeFileAsync(writePath, prettyTestOutput);
+    } else {
+      console.log(`Specified write directory ${testWriteDir} does not eixst.`);
+      return unitTests;
     }
   }
 
@@ -134,10 +112,10 @@ export class jest {
     return relativePath
   }
 
-  writeHead() {
+  writeHead(wrapperType) {
     return `
         import React from 'react';
-        import { configure, shallow } from 'enzyme';
+        import { configure, ${wrapperType} } from 'enzyme';
         import Adapter from 'enzyme-adapter-react-16';
         configure({ adapter: new Adapter() });
 
@@ -205,25 +183,17 @@ export class jest {
     `;
   }
 
-  writeShallowWrapper(componentName) {
+  writeWrapper(componentName, wrapperType) {
     return `
-      const wrapper = shallow(<${componentName} {...props} />);
+      const wrapper = ${wrapperType}(<${componentName} {...props} />);
     `;
   }
 
-  writePropsAndShallowWrapper(props, componentName) {
+  writePropsAndWrapper(props, componentName, wrapperType) {
     return `
       ${this.writeProps(props)}
       
-      ${this.writeShallowWrapper(componentName)}
-    `;
-  }
-
-  writeClickPropsAndShallowWrapper(props, componentName) {
-    return `
-      ${this.writeClickProps(props)}
-      
-      ${this.writeShallowWrapper(componentName)}
+      ${this.writeWrapper(componentName, wrapperType)}
     `;
   }
 
@@ -250,13 +220,37 @@ export class jest {
     `;
   }
 
-  basicClickTest() {
-    return `
-      wrapper.simulate('click');
+  childClickTest(childComponentName, childComponentProps) {
+    if (childComponentName) {
+
+      let targetWrapperFind = `wrapper.find(${childComponentName})`;
+      if (childComponentProps) {
+        // filter just on primitives
+        const strippedProps = this.stripObFunctionsFromProps(childComponentProps);
+        targetWrapperFind = `${targetWrapperFind}.find(${JSON.stringify(strippedProps)})`;
+      }
+
+      return `
       ${this.writeItBlock("is successfully clicked")}
-        expect(spy).toHaveBeenCalled();
+        const eventTargetWrapper = ${targetWrapperFind}.first();
+        eventTargetWrapper.simulate("click");
+        // assert outcome such as expect(spy).toHaveBeenCalled();
       ${this.closeBlock()}
-  `;
+      `;
+    }
+
+    return '';
+  }
+
+  stripObFunctionsFromProps(props) {
+    let strippedProps = {};
+    for (const prop of Object.keys(props)) {
+      if (typeof props[prop] !== 'object' && props[prop] !== '[Function]') {
+        strippedProps[prop] = props[prop];
+      }
+    }
+
+    return strippedProps;
   }
 
 }
