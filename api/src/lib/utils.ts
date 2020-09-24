@@ -37,6 +37,29 @@ const babeloptions: ParserOptions = {
   ]
 };
 
+export async function findDescribeBlocks(writeInfo: any) {
+
+  // testWriteDir: testWritePath, testFileName: testFileName
+  const existingTestLocation = path.join(writeInfo.testWriteDir, writeInfo.testFileName);
+  const fileAst: any = await createAst(existingTestLocation);
+  const block = [];
+  let i, j;
+
+  for (i = 1; i < fileAst?.tokens?.length; i++) {
+    if (fileAst.tokens[i].value === 'describe') {
+      j = i + 1;
+      while (j < i + 100) {
+        if (fileAst.tokens[j].value !== undefined) {
+          block.push(fileAst.tokens[j].value);
+          break;
+        }
+        j += 1;
+      }
+    }
+  }
+  return block;
+}
+
 export async function reconcileWithAst(event: any) {
 
   let fileAst: any;
@@ -85,8 +108,12 @@ async function createAst(filename: string) {
   let data: string;
   let ast: object;
 
-  data = await fs.promises.readFile(filename, 'utf8');
-  ast = babelparser.parse(data, babeloptions);
+  try {
+    data = await fs.promises.readFile(filename, 'utf8');
+    ast = babelparser.parse(data, babeloptions);
+  } catch (e) {
+    console.log('AST creation error: ', e);
+  }
 
   return ast;
 }

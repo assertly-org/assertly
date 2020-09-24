@@ -5,7 +5,7 @@ configure({ adapter: new Adapter() });
 
 import CounterCard from "./CounterCard";
 
-describe("CounterCard", () => {
+describe("CounterCard Test", () => {
   const props = {
     history: {
       length: 2,

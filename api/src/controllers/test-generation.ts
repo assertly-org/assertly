@@ -1,7 +1,7 @@
 import { ControllerBase, ControllerProperties, get, post, controller, format, Res, put } from 'ts-api';
 import { testWriter } from '../lib/testwriter/test-libraries';
 import path from 'path';
-import { reconcileWithAst, findTestWriteInfo } from '../lib/utils';
+import { reconcileWithAst, findTestWriteInfo, findDescribeBlocks } from '../lib/utils';
 import { validateLocaleAndSetLanguage } from 'typescript';
 
 
@@ -59,11 +59,15 @@ export default class TestGeneration extends ControllerBase {
   @get('')
   async checkExistingTest(filepath: string): Promise<any> {
     try {
-      // console.log('name sent', filepath);
+      // find the location of the existing tests
       const writeInfo = await findTestWriteInfo(filepath);
-      // console.log('information from the GET request', writeInfo);
 
+      // find describe blocks if there is an existing test
+      let describeBlocks;
+      writeInfo.existingFile ? describeBlocks = await findDescribeBlocks(writeInfo) : describeBlocks = undefined;
+      console.log('describe blocks: ', writeInfo, describeBlocks);
       return {
+        describeBlocks: describeBlocks,
         checkedEvent: writeInfo,
         success: true
       };

@@ -119,7 +119,9 @@ export default class AssertlyClient implements ClientInterface {
     const existingTestDivID = this.setupMenuDiv(event)  
     const test = ["a","b"]
 
-    test.map( val => {
+    const describeBlocks = existingTestResponse.describeBlocks;
+
+    describeBlocks.map( (val: string) => {
       const btn = document.createElement("BUTTON");
       btn.style.width = '150px';
       btn.innerHTML = val;
