@@ -35,8 +35,7 @@ export class jest {
     if (component.clickHandlerComponent) {
       wrapperType = 'mount';
 
-      const clickComponentName =
-        component.clickHandlerComponent?.componentName;
+      const clickComponentName = component.clickHandlerComponent?.componentName;
       const clickProps = component.clickHandlerComponent?.props;
       const clickComponentPath = component.clickHandlerComponent?.filename;
       const clickIsDefaultExport = component.componentInfo?.isDefaultExport;
@@ -61,14 +60,16 @@ export class jest {
     const componentPath = component.componentInfo?.filename;
     const relativePath = this.getImportFromLocation(testWriteDir, componentPath);
 
-    if (isDefaultExport) {
-      componentImport = `import ${componentName} from '${relativePath}';`;
-    } else {
-      componentImport = `import {${componentName}} from '${relativePath}';`;
-    }
 
+    if (isDefaultExport) {
+        componentImport = `import ${componentName} from '${relativePath}';`;
+    } else {
+        componentImport = `import {${componentName}} from '${relativePath}';`;
+    }
     testOutput += componentImport;
-    if (clickComponentImport) {
+
+    // only add another import if the component names are different
+    if (clickComponentImport && componentName !== clickComponentName) {
       testOutput += clickComponentImport;
     }
 
