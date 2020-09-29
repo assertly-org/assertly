@@ -80,10 +80,16 @@ export default class AssertlyClient implements ClientInterface {
     return divID
   }
 
-  appendButton = (elID:string , label: string) => {
+  appendButton = (elID:string , label: string, styles: any = undefined) => {
+    
     const btn = document.createElement("BUTTON");
     btn.style.width = '150px';
     btn.innerHTML = label;
+
+    if (styles) {
+      if (styles.backgroundColor) btn.style.backgroundColor = styles.backgroundColor;
+    }
+
     document.getElementById(elID)?.appendChild(btn);
     const br = document.createElement("br");
     document.getElementById(elID)?.appendChild(br);
@@ -121,7 +127,7 @@ export default class AssertlyClient implements ClientInterface {
 
     const describeBlocks = existingTestResponse.describeBlocks;
 
-    describeBlocks.map( (val: string) => {
+    describeBlocks?.map( (val: string) => {
       const btn = document.createElement("BUTTON");
       btn.style.width = '150px';
       btn.innerHTML = val;
@@ -131,7 +137,7 @@ export default class AssertlyClient implements ClientInterface {
     })
     const newTestBtn = this.appendButton(existingTestDivID, 'Create New Test')
 
-    const cancelBtn = this.appendButton(existingTestDivID, 'Cancel')
+    const cancelBtn = this.appendButton(existingTestDivID, 'Cancel', {backgroundColor: '#df2a2a7a'})
     cancelBtn.addEventListener('click', async () => await this.removeSingleMenu(existingTestDivID));
 
     return {newTestBtn: newTestBtn, existingTestMenuID: existingTestDivID}
