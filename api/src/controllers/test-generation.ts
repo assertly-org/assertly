@@ -73,7 +73,7 @@ export default class TestGeneration extends ControllerBase {
       };
 
     } catch (e) {
-      console.error('Error checking for existing test');
+      console.error('checkExistingTest error for file: ', filepath, ' error:', e);
       this.input.res.sendStatus(500);
       return;
     }
