@@ -4,10 +4,7 @@ import path from 'path';
 import getApp from '../requestConfig';
 
 const buildData = {
-  requestId: '',
-  accountId: '39e760b1-d282-44d3-94d0-8d538b4904ae',
-  fileUrl: '',
-  fileEndpoint: ''
+  accountId: '39e760b1-d282-44d3-94d0-8d538b4904ae'
 };
 describe('Event fetch', () => {
   it('should require a filepath', async (done) => {
