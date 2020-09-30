@@ -55,11 +55,13 @@
     "@types/jest": "^25.0.0",
     "@types/node": "^14.0.4",
     "@types/prettier": "^2.0.0",
+    "@types/supertest": "^2.0.10",
     "babylon": "^7.0.0-beta.47",
     "concurrently": "^5.2.0",
     "nodemon": "^2.0.0",
     "prettier": "^2.0.5",
     "recast": "^0.19.1",
+    "supertest": "^5.0.0",
     "ts-node": "^8.10.1",
     "tslint": "^6.1.2",
     "typescript": "^3.9.3"
