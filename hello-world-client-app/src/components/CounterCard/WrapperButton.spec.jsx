@@ -4,7 +4,6 @@ import Adapter from "enzyme-adapter-react-16";
 configure({ adapter: new Adapter() });
 
 import WrapperButton from "./WrapperButton";
-import WrapperButton from "./WrapperButton";
 
 describe("WrapperButton", () => {
   const props = { variant: "primary", size: "lg", onClick: "[Function]" };

@@ -120,7 +120,7 @@ export default class AssertlyClient implements ClientInterface {
 
   };
 
-  createExistingTestMenu = async (event: any, existingTestResponse: any) => {
+  createExistingTestMenu = async (event: any, existingTestResponse: any, message: Message, selectedComponent: any) => {
    
     const existingTestDivID = this.setupMenuDiv(event)  
     const test = ["a","b"]
@@ -128,14 +128,21 @@ export default class AssertlyClient implements ClientInterface {
     const describeBlocks = existingTestResponse.describeBlocks;
 
     describeBlocks?.map( (val: string) => {
-      const btn = document.createElement("BUTTON");
-      btn.style.width = '150px';
-      btn.innerHTML = val;
-      document.getElementById(existingTestDivID)?.appendChild(btn);
-      const br = document.createElement("br");
-      document.getElementById(existingTestDivID)?.appendChild(br);
+      this.appendButton(existingTestDivID, val)
+      // put some listeners here to modify existing tests
     })
+
     const newTestBtn = this.appendButton(existingTestDivID, 'Create New Test')
+    // listener for newTestBtn
+    newTestBtn.addEventListener('click', async () => {
+      await this.createNewTest({
+        ...message,
+        componentInfo: selectedComponent,
+        checkedEvent: existingTestResponse.checkedEvent
+      })
+      await this.removeSingleMenu(existingTestDivID);
+    });
+
 
     const cancelBtn = this.appendButton(existingTestDivID, 'Cancel', {backgroundColor: '#df2a2a7a'})
     cancelBtn.addEventListener('click', async () => await this.removeSingleMenu(existingTestDivID));
@@ -160,20 +167,23 @@ export default class AssertlyClient implements ClientInterface {
     
     // check for existing tests
     const existingTestResponse = await this.checkForExistingTest(selectedComponent?.filename);
-    
-    // the response will contain the dom elements of the buttons for either the existing tests or
-    // to create a new test
-    const existingTestMenuResponse = await this.createExistingTestMenu(event, existingTestResponse)
 
-    // add listener for creating a brand new test
-    existingTestMenuResponse.newTestBtn.addEventListener('click', async () => {
-      await this.createNewTest({
-        ...message,
-        componentInfo: selectedComponent,
-        checkedEvent: existingTestResponse.checkedEvent
-      })
-      await this.removeSingleMenu(existingTestMenuResponse.existingTestMenuID);
-    });
+    // if there is an existing test, show the existing test menu, otherwise just create the new test
+    if (existingTestResponse.describeBlocks) {
+      await this.createExistingTestMenu(event, existingTestResponse, message, selectedComponent)
+      // add listener for creating a brand new test
+      // existingTestMenuResponse.newTestBtn.addEventListener('click', async () => {
+      //   await this.createNewTest({
+      //     ...message,
+      //     componentInfo: selectedComponent,
+      //     checkedEvent: existingTestResponse.checkedEvent
+      //   })
+      //   await this.removeSingleMenu(existingTestMenuResponse.existingTestMenuID);
+      // });
+    } else {
+      await this.createNewTest({...message, componentInfo: selectedComponent, checkedEvent: existingTestResponse.checkedEvent})
+      console.log("New Test Created")
+    }
 
     // this.sendEvent({
     //   ...message,
