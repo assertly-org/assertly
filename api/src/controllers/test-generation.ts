@@ -25,27 +25,27 @@ export default class TestGeneration extends ControllerBase {
       const astPromises: Promise<any>[] = [];
 
       if (!event) {
+        console.log('no event');
         this.input.res.send({ message: 'no test to generate' });
         return;
       }
 
-      event.forEach(event => astPromises.push(reconcileWithAst(event)));
+      event.forEach(event => {
+        // if (!event.componentInfo) throw new Error('Invalid Event');
+        astPromises.push(reconcileWithAst(event));
+      });
 
       const astReconciledEvents = await Promise.all(astPromises);
 
       const jestTestWriter = new testWriter('jest', astReconciledEvents);
       let unitTests: any;
 
-      unitTests = jestTestWriter.write();
+      unitTests = await jestTestWriter.write();
 
       // this.input.res.send({ast: fileAst});
 
     } catch (e) {
-      if (e instanceof TypeError) {
-        console.log(`Error creating test, it is likely the item selected was not a React Component.`);
-      } else {
-        console.error('createTest error: ', e);
-      }
+      console.error('createTest error for event: ', event, ' error:', e);
       this.input.res.sendStatus(500);
       return;
     }

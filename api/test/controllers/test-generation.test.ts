@@ -1,5 +1,5 @@
 import path from 'path';
-
+const fs = require("fs");
 // @ts-ignore
 import getApp from '../requestConfig';
 
@@ -48,3 +48,76 @@ describe('Event fetch', () => {
       });
   });
 });
+
+describe('Event post', () => {
+  it('should require an event', async (done) => {
+    const request = await getApp();
+    request
+      .post(`/api/accounts/${buildData.accountId}/events`)
+      .end(function(err, res) {
+        expect(res.status).toBe(400);
+        done();
+      });
+  });
+
+  it('should return a 500 on an invalid event', async (done) => {
+    const request = await getApp();
+    request
+      .post(`/api/accounts/${buildData.accountId}/events`)
+      .send({event: 12345})
+      .end(function(err, res) {
+        expect(res.status).toBe(500);
+        done();
+      });
+  });
+
+  it('should return a 200 on an valid event', async (done) => {
+    const request = await getApp();
+    request
+      .post(`/api/accounts/${buildData.accountId}/events`)
+      .send({event: 12345})
+      .end(function(err, res) {
+        expect(res.status).toBe(500);
+        done();
+      });
+  });
+});
+
+const createFakeComponent = async (event) => {
+  
+
+}
+
+// Event: 
+//  {
+//   action: 'click',
+//   checked: null,
+//   coordinates: null,
+//   href: null,
+//   keyCode: null,
+//   tagName: 'BUTTON',
+//   tagType: 'button',
+//   textContent: 'Add',
+//   timestamp: 1600956804615,
+//   value: '',
+//   writeTestLocation: '',
+//   componentInfo: {
+//     filename: '/Users/zealotsd/Repos/assertly/hello-world-client-app/src/components/CounterCard/WrapperButton.js',
+//     linenumber: 8,
+//     props: { variant: 'primary', size: 'lg', onClick: '[Function]' },
+//     componentName: 'WrapperButton',
+//     isDefaultExport: true
+//   },
+//   clickHandlerComponent: {
+//     filename: '/Users/zealotsd/Repos/assertly/hello-world-client-app/src/components/CounterCard/WrapperButton.js',
+//     linenumber: 8,
+//     props: { variant: 'primary', size: 'lg', onClick: '[Function]' },
+//     componentName: 'WrapperButton',
+//     isDefaultExport: true
+//   },
+//   checkedEvent: {
+//     testWriteDir: '/Users/zealotsd/Repos/assertly/hello-world-client-app/src/components/CounterCard/',
+//     testFileName: 'WrapperButton.spec.jsx',
+//     existingFile: true
+//   }
+// }
