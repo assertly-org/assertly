@@ -1,11 +1,44 @@
 import path from 'path';
 const fs = require("fs");
+const {promisify} = require("util");
+const writeFileAsync = promisify(fs.writeFile);
 // @ts-ignore
 import getApp from '../requestConfig';
 
 const buildData = {
   accountId: '39e760b1-d282-44d3-94d0-8d538b4904ae'
 };
+
+const testEvent = 
+ {
+  action: 'click',
+  tagName: 'BUTTON',
+  tagType: 'button',
+  textContent: 'Add',
+  timestamp: 1600956804615,
+  value: '',
+  writeTestLocation: '',
+  clickHandlerComponent: {
+    filename: 'api/test/controllers/testComponent.js',
+    linenumber: 8,
+    props: { variant: 'primary', size: 'lg', onClick: '[Function]' },
+    componentName: 'WrapperButton',
+    isDefaultExport: true
+  },
+  componentInfo: {
+    filename: 'api/test/controllers/testComponent.js',
+    linenumber: 8,
+    props: { variant: 'primary', size: 'lg', onClick: '[Function]' },
+    componentName: 'WrapperButton',
+    isDefaultExport: true
+  },
+  checkedEvent: {
+    testWriteDir: 'api/test/controllers/',
+    testFileName: 'test.spec.jsx',
+    existingFile: true
+  }
+}
+
 describe('Event fetch', () => {
   it('should require a filepath', async (done) => {
     const request = await getApp();
@@ -64,7 +97,7 @@ describe('Event post', () => {
     const request = await getApp();
     request
       .post(`/api/accounts/${buildData.accountId}/events`)
-      .send({event: 12345})
+      .send({event: 99999})
       .end(function(err, res) {
         expect(res.status).toBe(500);
         done();
@@ -75,49 +108,24 @@ describe('Event post', () => {
     const request = await getApp();
     request
       .post(`/api/accounts/${buildData.accountId}/events`)
-      .send({event: 12345})
+      .send( await (async () => {
+        await createFakeComponent(testEvent)
+        return {event: testEvent}
+      })())
       .end(function(err, res) {
-        expect(res.status).toBe(500);
+        expect(res.status).toBe(200);
         done();
       });
   });
 });
 
-const createFakeComponent = async (event) => {
-  
+const createFakeComponent = async (testevent: any) => {
+
+  if (fs.existsSync('api/test/controllers/testComponent.js')) {
+    fs.unlinkSync('api/test/controllers/testComponent.js');
+  }
+      // write the file
+  await writeFileAsync('api/test/controllers/testComponent.js', 'mock component');
 
 }
 
-// Event: 
-//  {
-//   action: 'click',
-//   checked: null,
-//   coordinates: null,
-//   href: null,
-//   keyCode: null,
-//   tagName: 'BUTTON',
-//   tagType: 'button',
-//   textContent: 'Add',
-//   timestamp: 1600956804615,
-//   value: '',
-//   writeTestLocation: '',
-//   componentInfo: {
-//     filename: '/Users/zealotsd/Repos/assertly/hello-world-client-app/src/components/CounterCard/WrapperButton.js',
-//     linenumber: 8,
-//     props: { variant: 'primary', size: 'lg', onClick: '[Function]' },
-//     componentName: 'WrapperButton',
-//     isDefaultExport: true
-//   },
-//   clickHandlerComponent: {
-//     filename: '/Users/zealotsd/Repos/assertly/hello-world-client-app/src/components/CounterCard/WrapperButton.js',
-//     linenumber: 8,
-//     props: { variant: 'primary', size: 'lg', onClick: '[Function]' },
-//     componentName: 'WrapperButton',
-//     isDefaultExport: true
-//   },
-//   checkedEvent: {
-//     testWriteDir: '/Users/zealotsd/Repos/assertly/hello-world-client-app/src/components/CounterCard/',
-//     testFileName: 'WrapperButton.spec.jsx',
-//     existingFile: true
-//   }
-// }
