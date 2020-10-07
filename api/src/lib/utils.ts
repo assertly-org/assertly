@@ -33,7 +33,8 @@ const babeloptions: ParserOptions = {
       'optionalChaining',
       ['pipelineOperator', { proposal: 'minimal' }],
       'throwExpressions',
-      'jsx'
+      'jsx',
+      'typescript'
   ]
 };
 
@@ -108,12 +109,17 @@ async function createAst(filename: string) {
   let data: string;
   let ast: object;
 
-  try {
-    data = await fs.promises.readFile(filename, 'utf8');
-    ast = babelparser.parse(data, babeloptions);
-  } catch (e) {
-    console.log('AST creation error: ', e);
-  }
+  // try {
+  //   data = await fs.promises.readFile(filename, 'utf8');
+  //   ast = babelparser.parse(data, babeloptions);
+  // } catch (e) {
+  //   console.log('AST creation error: ', e);
+  // }
+
+  // errors in ast creation will be caught in the post
+  console.log('filename for ast: ', filename);
+  data = await fs.promises.readFile(filename, 'utf8');
+  ast = babelparser.parse(data, babeloptions);
 
   return ast;
 }

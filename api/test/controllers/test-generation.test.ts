@@ -19,14 +19,16 @@ const testEvent =
   value: '',
   writeTestLocation: '',
   clickHandlerComponent: {
-    filename: 'api/test/controllers/testComponent.js',
+    // filename of test file will be populated in the test
+    filename: '',
     linenumber: 8,
     props: { variant: 'primary', size: 'lg', onClick: '[Function]' },
     componentName: 'WrapperButton',
     isDefaultExport: true
   },
   componentInfo: {
-    filename: 'api/test/controllers/testComponent.js',
+    // filename of test file will be populated in the test
+    filename: '',
     linenumber: 8,
     props: { variant: 'primary', size: 'lg', onClick: '[Function]' },
     componentName: 'WrapperButton',
@@ -104,12 +106,26 @@ describe('Event post', () => {
       });
   });
 
-  it('should return a 200 on an valid event', async (done) => {
+  it('should return a 200 on a component written in js', async (done) => {
     const request = await getApp();
     request
       .post(`/api/accounts/${buildData.accountId}/events`)
       .send( await (async () => {
-        await createFakeComponent(testEvent)
+        await createFakeComponent(testEvent, 'js')
+        return {event: testEvent}
+      })())
+      .end(function(err, res) {
+        expect(res.status).toBe(200);
+        done();
+      });
+  });
+
+  it('should return a 200 on a component written in ts', async (done) => {
+    const request = await getApp();
+    request
+      .post(`/api/accounts/${buildData.accountId}/events`)
+      .send( await (async () => {
+        await createFakeComponent(testEvent, 'ts')
         return {event: testEvent}
       })())
       .end(function(err, res) {
@@ -119,13 +135,30 @@ describe('Event post', () => {
   });
 });
 
-const createFakeComponent = async (testevent: any) => {
+const createFakeComponent = async (testEvent: any, fileExtension: string) => {
 
-  if (fs.existsSync('api/test/controllers/testComponent.js')) {
-    fs.unlinkSync('api/test/controllers/testComponent.js');
+  if (fs.existsSync(`api/test/controllers/testComponent.${fileExtension}`)) {
+    fs.unlinkSync(`api/test/controllers/testComponent.${fileExtension}`);
   }
-      // write the file
-  await writeFileAsync('api/test/controllers/testComponent.js', 'mock component');
+
+  if (fileExtension === 'ts') {
+    await writeFileAsync('api/test/controllers/testComponent.ts', `export interface User {
+      name: string;
+      id: number;
+    }`);
+
+    // objects are passed by reference, and may be edited inside a function
+    testEvent.componentInfo.filename = 'api/test/controllers/testComponent.ts'
+    testEvent.clickHandlerComponent.filename = 'api/test/controllers/testComponent.ts'
+
+  } else if (fileExtension === 'js') {
+    await writeFileAsync('api/test/controllers/testComponent.js', `export class foo {}`);
+
+    // objects are passed by reference, and may be edited inside a function
+    testEvent.componentInfo.filename = 'api/test/controllers/testComponent.js'
+    testEvent.clickHandlerComponent.filename = 'api/test/controllers/testComponent.js'
+
+  }
 
 }
 
