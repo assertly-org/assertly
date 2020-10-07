@@ -60,6 +60,7 @@ export default class AssertlyClient implements ClientInterface {
     previousMenus?.map((val: any) => val.remove());
   }
 
+  // remove an element by element ID
   removeSingleMenu = async (elID: string) => {
     const menuDiv = document.getElementById(elID);
     menuDiv?.remove();
@@ -98,8 +99,6 @@ export default class AssertlyClient implements ClientInterface {
 
   createPopupMenu = (message: Message, mouseEvent: MouseEvent) => {
 
-    // remove all existing menus
-    this.removeMenusByClassname('componentMenu')
     // create the dom element and store the element ID
     const divID = this.setupMenuDiv(mouseEvent)    
 
@@ -115,15 +114,12 @@ export default class AssertlyClient implements ClientInterface {
         document.getElementById(divID)?.appendChild(br);
       }
     });
-    const CancelBtn = this.appendButton(divID, 'Cancel')
-    CancelBtn.addEventListener('click', async () => await this.removeSingleMenu(divID));
 
   };
 
   createExistingTestMenu = async (event: any, existingTestResponse: any, message: Message, selectedComponent: any) => {
    
     const existingTestDivID = this.setupMenuDiv(event)  
-    const test = ["a","b"]
 
     const describeBlocks = existingTestResponse.describeBlocks;
 
@@ -140,19 +136,16 @@ export default class AssertlyClient implements ClientInterface {
         componentInfo: selectedComponent,
         checkedEvent: existingTestResponse.checkedEvent
       })
-      await this.removeSingleMenu(existingTestDivID);
+      // await this.removeSingleMenu(existingTestDivID);
     });
-
-
-    const cancelBtn = this.appendButton(existingTestDivID, 'Cancel', {backgroundColor: '#df2a2a7a'})
-    cancelBtn.addEventListener('click', async () => await this.removeSingleMenu(existingTestDivID));
 
     return {newTestBtn: newTestBtn, existingTestMenuID: existingTestDivID}
   }
 
   componentMenuClick = async (event: any, divID: any, message: Message): Promise<any> => {
 
-    await this.removeSingleMenu(divID);
+    // the window object has a handler that nukes all the ui menus on click, stop propagation if this behavior is not desired
+    // await this.removeSingleMenu(divID);
 
     const selectedComponent = message.componentInfo?.reduce(
       (acc: any, curr: any) => {
@@ -251,6 +244,9 @@ export default class AssertlyClient implements ClientInterface {
   recordEvent = (event: Event) => {
     const nodeTarget = event.target as Node;
     const mouseEvent = event as MouseEvent;
+
+    // remove all the UI component menus
+    this.removeMenusByClassname('componentMenu')
 
     // if the click is on a menu that pops up, dont go through the record event logic
     if (nodeTarget?.parentElement?.getAttribute("id")?.includes('componentMenu')) {
