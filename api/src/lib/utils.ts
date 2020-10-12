@@ -3,6 +3,8 @@ import fs from 'fs';
 import { ParserOptions } from '@babel/parser';
 import path from 'path';
 import { File } from '@babel/types';
+const {promisify} = require('util');
+const writeFileAsync = promisify(fs.writeFile);
 
 
 const babeloptions: ParserOptions = {
@@ -37,6 +39,40 @@ const babeloptions: ParserOptions = {
       'typescript'
   ]
 };
+
+export async function createPropsFile(event: any, maxPropsLength: any) {
+
+  const componentPropLength = event.componentInfo ? Object.keys(event.componentInfo.props).length :
+    undefined;
+
+  const clickHandlerPropLength = event.clickHandlerComponent ? Object.keys(event.clickHandlerComponent.props).length :
+    undefined;
+
+  if (componentPropLength > maxPropsLength || clickHandlerPropLength > maxPropsLength) {
+
+    event.checkedEvent.componentPropFilename = path.basename(event.checkedEvent?.testFileName, '.spec.jsx') + 'TestProps.js';
+
+    const propFilePath = path.join(event.checkedEvent.testWriteDir, event.checkedEvent.componentPropFilename);
+    if (fs.existsSync(propFilePath)) fs.unlinkSync(propFilePath);
+    let propObjectString = '';
+
+    if (componentPropLength > maxPropsLength) {
+      event.componentInfo.getPropsFromFile = true;
+      propObjectString += `export const componentProps = ${JSON.stringify(event.componentInfo.props)} \n`;
+    }
+
+    if (clickHandlerPropLength > maxPropsLength) {
+      event.clickHandlerComponent.getPropsFromFile = true;
+      propObjectString += `export const clickHandlerProps = ${JSON.stringify(event.clickHandlerComponent.props)} \n`;
+    }
+
+    await writeFileAsync(propFilePath, propObjectString);
+
+   // populate the props file
+   // attach the props file name key to the componentInfo object
+   // remember to check for props file name in the jest writer
+  }
+}
 
 export async function findDescribeBlocks(writeInfo: any) {
 
@@ -99,7 +135,6 @@ export async function findTestWriteInfo(filepath: string) {
   if (testWritePath.slice(-1) !== '/') testWritePath = testWritePath.concat('/');
 
   const existingFile = await checkFilePath(path.join(testWritePath, testFileName));
-  // console.log('checking existing stuff: ', path.join(testWritePath, testFileName), existingFile);
 
   return {testWriteDir: testWritePath, testFileName: testFileName, existingFile: existingFile};
 }

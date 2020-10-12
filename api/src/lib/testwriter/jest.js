@@ -26,27 +26,41 @@ export class jest {
 
     const testWriteDir = component.checkedEvent?.testWriteDir;
     const testFileName = component.checkedEvent?.testFileName;
-    let testOutput = "";
-    let componentImport = "";
+
+    const componentPropFilename = component.checkedEvent?.componentPropFilename;
+
+    let testOutput = '';
+    let componentImport = '';
+    let componentPropsImport = '';
+
+    let clickTestBlock = '';
+    let clickComponentImport = '';
+    let clickComponentPropsImport = '';
 
     console.log('Event: \n', component)
     
-    let clickTestBlock = '';
+    
     if (component.clickHandlerComponent) {
       wrapperType = 'mount';
 
       const clickComponentName = component.clickHandlerComponent?.componentName;
       const clickProps = component.clickHandlerComponent?.props;
       const clickComponentPath = component.clickHandlerComponent?.filename;
-      const clickIsDefaultExport = component.componentInfo?.isDefaultExport;
-
-      const clickRelativePath = this.getImportFromLocation(testWriteDir, clickComponentPath);
+      const clickIsDefaultExport = component.clickHandlerComponent?.isDefaultExport;
       
-      let clickComponentImport = '';
+      const clickGetPropsFromFile = component.clickHandlerComponent?.getPropsFromFile;
+
+      const clickRelativePath = this.getImportFromLocation(testWriteDir, clickComponentPath);  
+
       if (clickIsDefaultExport) {
-        clickComponentImport = `import ${clickComponentName} from '${clickRelativePath}';`
+        clickComponentImport = `import ${clickComponentName} from '${clickRelativePath}';`;
       } else {
         clickComponentImport = `import {${clickComponentName}} from '${clickRelativePath}';`;
+      }
+
+      if (clickGetPropsFromFile) {
+        // assumption that the prop files will be in the same directory as the test file
+        clickComponentPropsImport += `import {clickHandlerProps} from './${componentPropFilename}';`;
       }
 
       clickTestBlock = this.childClickTest(clickComponentName, clickProps)
@@ -58,17 +72,26 @@ export class jest {
     const props = component.componentInfo?.props;
     const isDefaultExport = component.componentInfo?.isDefaultExport;
     const componentPath = component.componentInfo?.filename;
+    const getPropsFromFile = component.componentInfo?.getPropsFromFile;
+
     const relativePath = this.getImportFromLocation(testWriteDir, componentPath);
 
 
     if (isDefaultExport) {
-        componentImport = `import ${componentName} from '${relativePath}';`;
+      componentImport = `import ${componentName} from '${relativePath}';`;
     } else {
-        componentImport = `import {${componentName}} from '${relativePath}';`;
+      componentImport = `import {${componentName}} from '${relativePath}';`;
     }
-    testOutput += componentImport;
+    if (getPropsFromFile) {
+      // assumption that the prop files will be in the same directory as the test file
+      componentPropsImport += `import {componentProps} from './${componentPropFilename}';`;
+    }
 
-    // only add another import if the component names are different
+    testOutput += componentImport;
+    testOutput += componentPropsImport;
+    testOutput += clickComponentPropsImport;
+
+    // only add click import if the component names are different
     if (clickComponentImport && componentName !== clickComponentName) {
       testOutput += clickComponentImport;
     }
@@ -77,7 +100,7 @@ export class jest {
 
     testOutput += this.writeOuterDescribe(componentName);
 
-    testOutput += this.writePropsAndWrapper(props, componentName, wrapperType);
+    testOutput += this.writePropsAndWrapper(props, componentName, wrapperType, getPropsFromFile);
 
     testOutput += this.basicRenderTest();
 
@@ -166,11 +189,17 @@ export class jest {
     `;
   }
 
-  writeProps(props) {
-    const propString = JSON.stringify(props);
-    return `
-      const props = ${propString};
-    `;
+  writeProps(props, getPropsFromFile = false) {
+    if (!getPropsFromFile) {
+      const propString = JSON.stringify(props);
+      return `
+        const props = ${propString};
+      `;
+    } else {
+      return `
+        const props = {...componentProps};
+      `;
+    }
   }
 
   writeClickProps(props) {
@@ -190,9 +219,9 @@ export class jest {
     `;
   }
 
-  writePropsAndWrapper(props, componentName, wrapperType) {
+  writePropsAndWrapper(props, componentName, wrapperType, getPropsFromFile = false) {
     return `
-      ${this.writeProps(props)}
+      ${this.writeProps(props, getPropsFromFile)}
       
       ${this.writeWrapper(componentName, wrapperType)}
     `;

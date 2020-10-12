@@ -1,7 +1,7 @@
 import { ControllerBase, ControllerProperties, get, post, controller, format, Res, put } from 'ts-api';
 import { testWriter } from '../lib/testwriter/test-libraries';
 import path from 'path';
-import { reconcileWithAst, findTestWriteInfo, findDescribeBlocks } from '../lib/utils';
+import { reconcileWithAst, findTestWriteInfo, findDescribeBlocks, createPropsFile } from '../lib/utils';
 import { validateLocaleAndSetLanguage } from 'typescript';
 
 
@@ -22,8 +22,9 @@ export default class TestGeneration extends ControllerBase {
   @post('')
   async createTest(event: Array<any>): Promise<any> {
     try {
-      console.log('event!', event);
+
       const astPromises: Promise<any>[] = [];
+      const propsFilePromises: Promise<any>[] = [];
 
       if (!event) {
         console.log('no event');
@@ -32,7 +33,7 @@ export default class TestGeneration extends ControllerBase {
       }
 
       event.forEach(event => {
-        // if (!event.componentInfo) throw new Error('Invalid Event');
+        propsFilePromises.push(createPropsFile(event, process.env.MAX_PROPS_LENGTH || 2));
         astPromises.push(reconcileWithAst(event));
       });
 

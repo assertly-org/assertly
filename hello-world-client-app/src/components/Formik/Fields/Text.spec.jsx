@@ -1,13 +1,15 @@
-import Component from "components/DesignPatterns/Hoc/Hoc.js";
 import React from "react";
 import { configure, shallow } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 configure({ adapter: new Adapter() });
 
-describe("Component", () => {
-  const props = { placeholder: "hoc", value: 1, name: "checkbox" };
+import Text from "./Text";
+import { componentProps } from "./TextProps.js";
 
-  const wrapper = shallow(<Component {...props} />);
+describe("Text", () => {
+  const props = { ...componentProps };
+
+  const wrapper = shallow(<Text {...props} />);
 
   it("exists and is not null", () => {
     expect(wrapper.exists()).toBe(true);

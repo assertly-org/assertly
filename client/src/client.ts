@@ -103,7 +103,7 @@ export default class AssertlyClient implements ClientInterface {
     const divID = this.setupMenuDiv(mouseEvent)    
 
     message?.componentInfo?.map((val: any) => {
-      console.log("button val: ", val);
+      // console.log("createPopupMenu button values: ", val);
       const btn = document.createElement("BUTTON");
       btn.style.width = '150px';
       btn.innerHTML = val?.componentName;
@@ -208,6 +208,7 @@ export default class AssertlyClient implements ClientInterface {
     const componentInfo = getComponentInfo(reactComponent, 10, []);
 
     // find the closest click handler that would have been triggered
+    // componentInfo is the special object which will be sent to the api with the relevant information
     // note, slice(0) copies the array
     const clickHandler = componentInfo?.slice(0)?.reverse()?.reduce(findClickHandler, null);
 
@@ -269,7 +270,7 @@ export default class AssertlyClient implements ClientInterface {
 
       const reactComponent = findReactElement(event.target);
       const msg: Message = this.getMessage(reactComponent, event);
-      console.log('reactComponent and message in RECORD_EVENT: ', reactComponent, msg);
+      // console.log('reactComponent and message in RECORD_EVENT: ', reactComponent, msg);
 
       localStorage.setItem("lastEvent", JSON.stringify(msg));
       this.previousMsg = msg;
@@ -312,7 +313,7 @@ export default class AssertlyClient implements ClientInterface {
   createNewTest = async (message: Message) => {
     let accountId = (window as { [key: string]: any })["dataLayer"][0]["apiKey"];
 
-    console.log('message: ', message );
+    // console.log('message in createNewTest: ', message );
 
     // rather get a 403 than a bad route
     if (!accountId) {
@@ -351,7 +352,7 @@ export default class AssertlyClient implements ClientInterface {
     const uriFilepath = encodeURI(filepath)
     const url = `//localhost:3020/api/accounts/${accountId}/events/?filepath=${uriFilepath}`;
 
-    console.log('url hit: ', url, uriFilepath)
+    // console.log('checkForExistingTest url hit: ', url, uriFilepath)
     const response = await fetch(url, {
       method: "GET",
       mode: "cors",
