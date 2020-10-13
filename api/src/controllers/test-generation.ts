@@ -33,7 +33,7 @@ export default class TestGeneration extends ControllerBase {
       }
 
       event.forEach(event => {
-        propsFilePromises.push(createPropsFile(event, process.env.MAX_PROPS_LENGTH || 2));
+        propsFilePromises.push(createPropsFile(event, process.env.MAX_PROPS_LENGTH || 15));
         astPromises.push(reconcileWithAst(event));
       });
 

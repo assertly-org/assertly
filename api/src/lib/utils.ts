@@ -58,21 +58,31 @@ export async function createPropsFile(event: any, maxPropsLength: any) {
 
     if (componentPropLength > maxPropsLength) {
       event.componentInfo.getPropsFromFile = true;
-      propObjectString += `export const componentProps = ${JSON.stringify(event.componentInfo.props)} \n`;
+      propObjectString += `export const componentProps = ${JSON.stringify(
+        stripObFunctionsFromProps(event.componentInfo.props))} \n`;
     }
 
     if (clickHandlerPropLength > maxPropsLength) {
       event.clickHandlerComponent.getPropsFromFile = true;
-      propObjectString += `export const clickHandlerProps = ${JSON.stringify(event.clickHandlerComponent.props)} \n`;
+      propObjectString += `export const clickHandlerProps = ${JSON.stringify(
+        stripObFunctionsFromProps(event.clickHandlerComponent.props))} \n`;
     }
 
     await writeFileAsync(propFilePath, propObjectString);
-
-   // populate the props file
-   // attach the props file name key to the componentInfo object
-   // remember to check for props file name in the jest writer
   }
 }
+
+function stripObFunctionsFromProps(props: any) {
+  const strippedProps: any = {};
+  for (const prop of Object.keys(props)) {
+    if (typeof props[prop] !== 'object' && props[prop] !== '[Function]') {
+      strippedProps[prop] = props[prop];
+    }
+  }
+
+  return strippedProps;
+}
+
 
 export async function findDescribeBlocks(writeInfo: any) {
 

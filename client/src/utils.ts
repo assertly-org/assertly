@@ -29,6 +29,8 @@ export function getComponentInfo(component: any, maxNest: number, resultArray: a
 }
 
 export function getComponentProps(component: any, props = {}): any {
+  // need to strip out function props here!!!
+  
   if (!component) {
     functionStringify(props);
     return props;

@@ -30,6 +30,7 @@ export class jest {
     const componentPropFilename = component.checkedEvent?.componentPropFilename;
 
     let testOutput = '';
+
     let componentImport = '';
     let componentPropsImport = '';
 
@@ -44,7 +45,7 @@ export class jest {
       wrapperType = 'mount';
 
       const clickComponentName = component.clickHandlerComponent?.componentName;
-      const clickProps = component.clickHandlerComponent?.props;
+      const clickProps = component.clickHandlerComponent?.props;   
       const clickComponentPath = component.clickHandlerComponent?.filename;
       const clickIsDefaultExport = component.clickHandlerComponent?.isDefaultExport;
       
@@ -63,13 +64,15 @@ export class jest {
         clickComponentPropsImport += `import {clickHandlerProps} from './${componentPropFilename}';`;
       }
 
-      clickTestBlock = this.childClickTest(clickComponentName, clickProps)
+      clickTestBlock = this.childClickTest(clickComponentName, clickProps, clickGetPropsFromFile)
     }
 
     testOutput += this.writeHead(wrapperType);
 
     const componentName = component.componentInfo?.componentName;
+
     const props = component.componentInfo?.props;
+    
     const isDefaultExport = component.componentInfo?.isDefaultExport;
     const componentPath = component.componentInfo?.filename;
     const getPropsFromFile = component.componentInfo?.getPropsFromFile;
@@ -191,7 +194,8 @@ export class jest {
 
   writeProps(props, getPropsFromFile = false) {
     if (!getPropsFromFile) {
-      const propString = JSON.stringify(props);
+      const strippedProps = this.stripObFunctionsFromProps(props);
+      const propString = JSON.stringify(strippedProps);
       return `
         const props = ${propString};
       `;
@@ -250,14 +254,18 @@ export class jest {
     `;
   }
 
-  childClickTest(childComponentName, childComponentProps) {
+  childClickTest(childComponentName, childComponentProps, getPropsFromFile = false) {
     if (childComponentName) {
 
       let targetWrapperFind = `wrapper.find(${childComponentName})`;
       if (childComponentProps) {
         // filter just on primitives
-        const strippedProps = this.stripObFunctionsFromProps(childComponentProps);
-        targetWrapperFind = `${targetWrapperFind}.find(${JSON.stringify(strippedProps)})`;
+        if (!getPropsFromFile) {
+          const strippedProps = this.stripObFunctionsFromProps(childComponentProps);
+          targetWrapperFind = `${targetWrapperFind}.find(${JSON.stringify(strippedProps)})`;
+        } else {
+          targetWrapperFind = `${targetWrapperFind}.find({...clickHandlerProps})`;
+        }
       }
 
       return `
